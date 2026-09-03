@@ -1,0 +1,6 @@
+{
+  "name": "GTA MAZENGALAB SANAA",
+  "description": "لعبة مطاردة وأكشن تكتيكية في شوارع وحارات صنعاء القديمة بين عصابة المشاغبين الصغار ورجال الشرطة",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
