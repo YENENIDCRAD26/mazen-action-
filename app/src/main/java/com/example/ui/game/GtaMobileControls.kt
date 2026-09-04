@@ -345,18 +345,55 @@ fun GtaAuthenticHud(
   locationNameAr: String,
   playerWorldAngle: Float,
   policeDistance: Float,
+  chaseRemainingSeconds: Int = 300,
   modifier: Modifier = Modifier
 ) {
   Box(modifier = modifier.fillMaxSize()) {
-    // 1. Top-Left Circular Radar Mini-Map (GTA Style)
-    GtaCircularRadarMiniMap(
-      playerHeadingDeg = playerWorldAngle,
-      policeDist = policeDistance,
+    // 1. Top-Left Circular Radar Mini-Map & Circular Chase Timer (GTA Style)
+    Row(
       modifier = Modifier
         .align(Alignment.TopStart)
-        .padding(top = 10.dp, start = 12.dp)
-        .testTag("gta_radar_minimap")
-    )
+        .padding(top = 10.dp, start = 12.dp),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      GtaCircularRadarMiniMap(
+        playerHeadingDeg = playerWorldAngle,
+        policeDist = policeDistance,
+        modifier = Modifier.testTag("gta_radar_minimap")
+      )
+
+      // Circular Countdown Timer (5 Minutes Chase Timer: 300s)
+      val minutes = chaseRemainingSeconds / 60
+      val seconds = chaseRemainingSeconds % 60
+      val progress = (chaseRemainingSeconds / 300f).coerceIn(0f, 1f)
+
+      Box(
+        modifier = Modifier
+          .size(44.dp)
+          .clip(CircleShape)
+          .background(Color(0xDD111827))
+          .border(1.2.dp, Color(0x66FFFFFF), CircleShape)
+          .testTag("circular_chase_timer"),
+        contentAlignment = Alignment.Center
+      ) {
+        CircularProgressIndicator(
+          progress = { progress },
+          modifier = Modifier.fillMaxSize(),
+          color = if (chaseRemainingSeconds < 60) Color(0xFFFF1744) else Color(0xFFFFD54F),
+          trackColor = Color(0x33FFFFFF),
+          strokeWidth = 3.dp
+        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          Text(
+            text = String.format("%d:%02d", minutes, seconds),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 9.sp
+          )
+        }
+      }
+    }
 
     // 2. Top-Right GTA San Andreas Status HUD (Clock, Cash, Health/Armor, Weapon)
     Column(

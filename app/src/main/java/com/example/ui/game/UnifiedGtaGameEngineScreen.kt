@@ -65,6 +65,8 @@ fun UnifiedGtaGameEngineScreen(
   var cashAmount by remember { mutableIntStateOf(80872) }
   var gameTimeMinutes by remember { mutableIntStateOf(21 * 60 + 13) } // 21:13 starting time
   var isPaused by remember { mutableStateOf(false) }
+  var chaseRemainingSeconds by remember { mutableIntStateOf(300) } // 5 minutes chase timer
+  var timerAccumulator by remember { mutableFloatStateOf(0f) }
 
   // Projectiles
   val projectiles = remember { mutableStateListOf<GameProjectile>() }
@@ -130,8 +132,15 @@ fun UnifiedGtaGameEngineScreen(
             jumpHeight = (jumpHeight - 4.5f * dt).coerceAtLeast(0f)
           }
 
-          // Advance in-game clock slowly
-          gameTimeMinutes = (gameTimeMinutes + 1) % (24 * 60)
+          // Advance in-game clock slowly & chase timer
+          timerAccumulator += dt
+          if (timerAccumulator >= 1f) {
+            timerAccumulator -= 1f
+            gameTimeMinutes = (gameTimeMinutes + 1) % (24 * 60)
+            if (chaseRemainingSeconds > 0) {
+              chaseRemainingSeconds -= 1
+            }
+          }
 
           // Update Projectiles
           val iterator = projectiles.iterator()
@@ -183,7 +192,7 @@ fun UnifiedGtaGameEngineScreen(
       }
     )
 
-    // 2. Authentic GTA Mobile HUD (Radar Mini-Map, Clock, Green Cash, Health, Location)
+    // 2. Authentic GTA Mobile HUD (Radar Mini-Map, Clock, Green Cash, Health, Location, Circular Chase Timer)
     GtaAuthenticHud(
       hero = currentHero,
       weapon = currentWeapon,
@@ -194,6 +203,7 @@ fun UnifiedGtaGameEngineScreen(
       locationNameAr = "حي صنعاء - باب اليمن",
       playerWorldAngle = playerAngleDeg,
       policeDistance = 45f,
+      chaseRemainingSeconds = chaseRemainingSeconds,
       modifier = Modifier.fillMaxSize()
     )
 

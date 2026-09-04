@@ -8,6 +8,7 @@ enum class Faction(val titleAr: String, val badgeAr: String) {
 enum class GameScreen {
   MAIN_MENU,
   MAIN_GAME,
+  GTA_UNIFIED_ENGINE,
   GTA_SANAA_7D,
   GTA_BEIRUT_3D,
   CHASE_GAME,

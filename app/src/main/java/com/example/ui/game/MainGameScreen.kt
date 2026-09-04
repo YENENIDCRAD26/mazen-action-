@@ -252,7 +252,9 @@ fun MainGameScreen(
               val isSelected = selectedCharacter.id == character.id
               val avatarDrawableRes = when (character.id) {
                 "mazen_leader" -> R.drawable.sanaa_kid_leader
-                "officer_tariq" -> R.drawable.sanaa_police_commander
+                "faris_parkour" -> R.drawable.img_hero_avatar
+                "ammar_driver" -> R.drawable.gta_sanaa_7d_chase
+                "salem_sniper" -> R.drawable.img_sanaa_hero_action
                 else -> null
               }
 
@@ -321,9 +323,16 @@ fun MainGameScreen(
                   fontSize = 13.sp
                 )
 
+                val heroRoleTag = when (character.id) {
+                  "mazen_leader" -> "الزعيم 👑"
+                  "faris_parkour" -> "الباركور 🧗‍♂️"
+                  "ammar_driver" -> "الهجولة 🚐"
+                  "salem_sniper" -> "التمويه 🎒"
+                  else -> "بطل 🌟"
+                }
                 Text(
-                  text = if (character.faction == Faction.GANG) "عصابة 🏴" else "شرطة 👮",
-                  color = if (character.faction == Faction.GANG) GangShawlRed else PoliceAccent,
+                  text = heroRoleTag,
+                  color = SanaaGold,
                   fontSize = 10.sp,
                   fontWeight = FontWeight.Medium
                 )

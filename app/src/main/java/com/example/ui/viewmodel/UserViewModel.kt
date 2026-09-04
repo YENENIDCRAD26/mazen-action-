@@ -36,50 +36,50 @@ val DEFAULT_PLAYABLE_CHARACTERS = listOf(
   PlayableCharacter(
     id = "mazen_leader",
     nameAr = "مازن غلاب (الزعيم)",
-    titleAr = "قائد المشاغبين في أزقة صنعاء",
+    titleAr = "قائد المشاغبين - بطل أزقة صنعاء",
     faction = Faction.GANG,
     avatarEmoji = "👑",
-    descriptionAr = "خبير الأزقة والقفز بين أسطح المنازل الطينية، يمتلك سرعة مباغتة وجنبية صنعانية للدفاع",
+    descriptionAr = "خبير الأزقة والقفز بين أسطح المنازل، يرتدي القميص الأخضر وقبعة الكاوبوي ويمتلك سرعة مباغتة",
     speedStat = 95,
     stealthStat = 90,
-    combatStat = 88,
-    signatureAbilityAr = "هروب الأسطح السريع ومراوغة دوريات الشرطة"
+    combatStat = 92,
+    signatureAbilityAr = "هروب الأسطح السريع والمراوغة ورشاش Tec-9"
   ),
   PlayableCharacter(
-    id = "officer_tariq",
-    nameAr = "المفتش طارق الصنعاني",
-    titleAr = "ضابط دوريات أمن العاصمة",
-    faction = Faction.POLICE,
-    avatarEmoji = "👮‍♂️",
-    descriptionAr = "قائد دوريات باب اليمن، يتمتع بتجهيزات أمنية متقدمة وقدرة على نشر الحواجز",
-    speedStat = 80,
-    stealthStat = 65,
-    combatStat = 94,
-    signatureAbilityAr = "استدعاء دورية إسناد وإغلاق الشوارع بالحواجز"
+    id = "faris_parkour",
+    nameAr = "فارس المتسلق (الباركور)",
+    titleAr = "قناص الأسطح ونوافذ القمريات",
+    faction = Faction.GANG,
+    avatarEmoji = "🧗‍♂️",
+    descriptionAr = "بطل الباركور والقفزات البهلوانية العالية واعتلاء المباني الأثرية بدقة المقلاع الحجري",
+    speedStat = 98,
+    stealthStat = 92,
+    combatStat = 80,
+    signatureAbilityAr = "قفزات بهلوانية فائقة وتصويب مقلاع دقيق"
+  ),
+  PlayableCharacter(
+    id = "ammar_driver",
+    nameAr = "عمار سائق الدباب (الهجولة)",
+    titleAr = "خبير خطف المركبات والتفحيط",
+    faction = Faction.GANG,
+    avatarEmoji = "🚐",
+    descriptionAr = "متخصص في تشغيل دبابات سوزوكي واقتحام المركبات وتفعيل النيترو للتفحيط في جولات صنعاء",
+    speedStat = 92,
+    stealthStat = 75,
+    combatStat = 85,
+    signatureAbilityAr = "قيادة فورية للمركبات وسرعة نيترو مضاعفة"
   ),
   PlayableCharacter(
     id = "salem_sniper",
-    nameAr = "سالم القناص (صاحب المقلاع)",
-    titleAr = "كشاف أسطح القمريات",
+    nameAr = "سالم القناص (التمويه)",
+    titleAr = "مسؤول التمويه ورذاذ الغرافيتي",
     faction = Faction.GANG,
-    avatarEmoji = "🧗‍♂️",
-    descriptionAr = "صاحب أعلى نقطة مراقبة في حارة الفليحي، يصيب العوائق بدقة بالمقلاع الحجري",
-    speedStat = 85,
-    stealthStat = 95,
-    combatStat = 75,
-    signatureAbilityAr = "رمي مقلاع دقيق لتعطيل كاميرات المراقبة والدوريات"
-  ),
-  PlayableCharacter(
-    id = "yasmin_mechanic",
-    nameAr = "ياسمين خبيرة الدبابات",
-    titleAr = "ميكانيكية المركبات والهروب",
-    faction = Faction.GANG,
-    avatarEmoji = "🚐",
-    descriptionAr = "متخصصة في تشغيل دبابات سوزوكي الصنعانية وتفعيل النيترو للتفحيط في الجولات",
-    speedStat = 92,
-    stealthStat = 70,
-    combatStat = 82,
-    signatureAbilityAr = "اقتحام فوري للمركبات وتسريع النيترو 200%"
+    avatarEmoji = "🎒",
+    descriptionAr = "خبير التشتيت وصاحب الستار الدخاني ورذاذ الغرافيتي ومفرقعات الطماق لتعطيل دوريات الأمن",
+    speedStat = 88,
+    stealthStat = 96,
+    combatStat = 78,
+    signatureAbilityAr = "ستار دخاني وغرافيتي وتشتيت دوريات الشرطة"
   )
 )
 

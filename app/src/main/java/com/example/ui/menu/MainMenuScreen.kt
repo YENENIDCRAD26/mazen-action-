@@ -588,11 +588,11 @@ fun MainMenuScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Action Quick Play Button (GTA Sanaa 7D)
+            // Action Quick Play Button (GTA Sanaa Unified 4 Heroes Engine)
             Button(
               onClick = {
                 GameSoundEffects.playNitroBoost()
-                onNavigateTo(GameScreen.GTA_SANAA_7D)
+                onNavigateTo(GameScreen.GTA_UNIFIED_ENGINE)
               },
               colors = ButtonDefaults.buttonColors(containerColor = SanaaGold),
               shape = RoundedCornerShape(12.dp),
@@ -603,7 +603,7 @@ fun MainMenuScreen(
             ) {
               Icon(Icons.Default.PlayArrow, contentDescription = null, tint = DarkBg)
               Spacer(modifier = Modifier.width(6.dp))
-              Text("العب الآن: مطاردة أزقة صنعاء 7D (GTA Sana'a) 🇾🇪🏃‍♂️", color = DarkBg, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+              Text("العب الآن: محاكي أبطال صنعاء الأربعة (GTA MAZENGALAB) 🇾🇪🎮", color = DarkBg, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -636,17 +636,17 @@ fun MainMenuScreen(
       )
     }
 
-    // Featured Hero Mode #1: GTA SANAA 7D (Alleys, Mud Towers, Wanted Stars)
+    // Featured Hero Mode #1: GTA SANAA 4 HEROES UNIFIED ENGINE
     item {
       GameModeCard(
-        title = "🇾🇪 مطاردة أزقة صنعاء 7D (GTA Sana'a 7D)",
-        subtitle = "محاكاة 7D فائقة الدقة! زقازيق باب اليمن، قفز أسطح الطين ونوافذ القمريات، خطف الدباب الصنعاني، ومطاردة العقيد ناصر 5 نجوم",
-        badge = "🌟 عرض 7D فائق الدقة (الأساسي)",
+        title = "🇾🇪 محاكي أبطال صنعاء الأربعة (GTA MAZENGALAB)",
+        subtitle = "محاكي ثلاثي الأبعاد متكامل يدمج الأبطال الأربعة: مازن، فارس، عمار، وسالم! أزرار تحكم كاملة، عصا تحكم أنالوج، وزقازيق باب اليمن دون حوارات مشتتة",
+        badge = "🌟 الطور الموحد الأساسي (GTA Engine)",
         badgeColor = SanaaGold,
         accentColor = SanaaGold,
         onClick = {
           GameSoundEffects.playNitroBoost()
-          onNavigateTo(GameScreen.GTA_SANAA_7D)
+          onNavigateTo(GameScreen.GTA_UNIFIED_ENGINE)
         },
         testTag = "mode_gta_sanaa_7d"
       )

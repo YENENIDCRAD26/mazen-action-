@@ -62,9 +62,22 @@ class MainActivity : ComponentActivity() {
                 MainGameScreen(
                   userViewModel = userViewModel,
                   onStartGame = { stageId ->
-                    currentScreen = GameScreen.GTA_SANAA_7D
+                    currentScreen = GameScreen.GTA_UNIFIED_ENGINE
                   },
                   onNavigateTo = { target -> currentScreen = target }
+                )
+              }
+              GameScreen.GTA_UNIFIED_ENGINE -> {
+                val selectedCharId = userViewModel.selectedCharacter.collectAsState().value.id
+                val heroId = when (selectedCharId) {
+                  "faris_parkour" -> com.example.ui.game.UnifiedHeroId.FARIS
+                  "ammar_driver" -> com.example.ui.game.UnifiedHeroId.AMMAR
+                  "salem_sniper" -> com.example.ui.game.UnifiedHeroId.SALEM
+                  else -> com.example.ui.game.UnifiedHeroId.MAZEN
+                }
+                com.example.ui.game.UnifiedGtaGameEngineScreen(
+                  initialHeroId = heroId,
+                  onNavigateBack = { currentScreen = GameScreen.MAIN_GAME }
                 )
               }
               GameScreen.MAIN_MENU -> {
