@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "637577255313",
+    "project_id": "sanaa-chase-game",
+    "storage_bucket": "sanaa-chase-game.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637577255313:android:9d45e0321a4f4e7c10b19d",
+        "android_client_info": {
+          "package_name": "com.aistudio.sanaachase.qrvklt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyForGoogleServicesBuildCompatibility01"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637577255313:android:8c34d9210e3e3d6b09a08c",
+        "android_client_info": {
+          "package_name": "com.example"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyForGoogleServicesBuildCompatibility02"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

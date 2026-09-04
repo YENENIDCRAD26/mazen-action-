@@ -83,9 +83,9 @@ fun SanaaChaseMiniMap(
   Box(
     modifier = modifier
       .testTag("sanaa_chase_minimap")
-      .size(130.dp)
-      .shadow(12.dp, CircleShape)
-      .clip(CircleShape)
+      .size(74.dp)
+      .shadow(8.dp, RoundedCornerShape(10.dp))
+      .clip(RoundedCornerShape(10.dp))
       .background(
         Brush.radialGradient(
           colors = listOf(
@@ -95,7 +95,7 @@ fun SanaaChaseMiniMap(
         )
       )
       .border(
-        width = 2.dp,
+        width = 1.2.dp,
         brush = Brush.sweepGradient(
           colors = listOf(
             GoldYemeni,
@@ -105,30 +105,30 @@ fun SanaaChaseMiniMap(
             GoldYemeni
           )
         ),
-        shape = CircleShape
+        shape = RoundedCornerShape(10.dp)
       )
-      .padding(4.dp)
+      .padding(2.dp)
   ) {
     Canvas(
       modifier = Modifier
         .fillMaxSize()
-        .clip(CircleShape)
+        .clip(RoundedCornerShape(10.dp))
     ) {
       val center = Offset(size.width / 2f, size.height / 2f)
-      val radius = (size.width / 2f) - 4f
+      val radius = (size.width / 2f) - 2f
 
       // 1. Draw Radar Concentric Circles & Crosshairs
       drawCircle(
         color = Color(0x2238BDF8),
         radius = radius,
         center = center,
-        style = Stroke(width = 1.5f)
+        style = Stroke(width = 1.2f)
       )
       drawCircle(
         color = Color(0x1838BDF8),
         radius = radius * 0.65f,
         center = center,
-        style = Stroke(width = 1f)
+        style = Stroke(width = 0.8f)
       )
       drawCircle(
         color = Color(0x1538BDF8),
@@ -188,14 +188,14 @@ fun SanaaChaseMiniMap(
         brush = Brush.radialGradient(
           colors = listOf(GoldYemeniLight, Color(0x00F59E0B)),
           center = Offset(center.x, goalY),
-          radius = 12f
+          radius = 8f
         ),
-        radius = 10f,
+        radius = 6f,
         center = Offset(center.x, goalY)
       )
       drawCircle(
         color = GoldYemeni,
-        radius = 4f,
+        radius = 3f,
         center = Offset(center.x, goalY)
       )
 
@@ -203,13 +203,13 @@ fun SanaaChaseMiniMap(
       for (spot in hidingSpots) {
         val spotZRatio = (spot.worldZ / 240f).coerceIn(0f, 1f)
         val spotY = center.y + (radius * 0.6f) - (spotZRatio * radius * 1.3f)
-        val spotX = if (spot.side < 0) alleyLeftX - 5f else alleyRightX + 5f
+        val spotX = if (spot.side < 0) alleyLeftX - 3f else alleyRightX + 3f
 
         if (spotY in (center.y - radius)..(center.y + radius)) {
           drawRect(
             color = Color(0xFF06B6D4),
-            topLeft = Offset(spotX - 3f, spotY - 3f),
-            size = Size(6f, 6f)
+            topLeft = Offset(spotX - 2f, spotY - 2f),
+            size = Size(4f, 4f)
           )
         }
       }
@@ -222,10 +222,10 @@ fun SanaaChaseMiniMap(
 
         if (thugY in (center.y - radius)..(center.y + radius)) {
           val path = Path().apply {
-            moveTo(thugX, thugY - 4f)
-            lineTo(thugX + 4f, thugY)
-            lineTo(thugX, thugY + 4f)
-            lineTo(thugX - 4f, thugY)
+            moveTo(thugX, thugY - 2.5f)
+            lineTo(thugX + 2.5f, thugY)
+            lineTo(thugX, thugY + 2.5f)
+            lineTo(thugX - 2.5f, thugY)
             close()
           }
           drawPath(
@@ -247,13 +247,13 @@ fun SanaaChaseMiniMap(
           // Outer pulsing alert ring
           drawCircle(
             color = copColor.copy(alpha = pulseAlpha * 0.4f),
-            radius = if (cop.isVehicle) 9f else 7f,
+            radius = if (cop.isVehicle) 6f else 4.5f,
             center = Offset(copX, copY)
           )
           // Solid police dot
           drawCircle(
             color = if (cop.isStunned) Color(0xFF9CA3AF) else copColor,
-            radius = if (cop.isVehicle) 4.5f else 3.5f,
+            radius = if (cop.isVehicle) 3f else 2f,
             center = Offset(copX, copY)
           )
         }
@@ -267,12 +267,12 @@ fun SanaaChaseMiniMap(
         // Stealth Shield Glow
         drawCircle(
           color = Color(0x6606B6D4),
-          radius = 10f,
+          radius = 7f,
           center = Offset(playerRadarX, playerRadarY)
         )
         drawCircle(
           color = Color(0xFF22D3EE),
-          radius = 4.5f,
+          radius = 3.5f,
           center = Offset(playerRadarX, playerRadarY)
         )
       } else {
@@ -284,18 +284,18 @@ fun SanaaChaseMiniMap(
               Color(0x0010B981)
             ),
             center = Offset(playerRadarX, playerRadarY),
-            radius = 14f
+            radius = 10f
           ),
-          radius = 12f,
+          radius = 8f,
           center = Offset(playerRadarX, playerRadarY)
         )
 
         // Triangular Pointer facing forward
         val pointerPath = Path().apply {
-          moveTo(playerRadarX, playerRadarY - 6f)
-          lineTo(playerRadarX + 4.5f, playerRadarY + 4f)
-          lineTo(playerRadarX, playerRadarY + 2f)
-          lineTo(playerRadarX - 4.5f, playerRadarY + 4f)
+          moveTo(playerRadarX, playerRadarY - 4.5f)
+          lineTo(playerRadarX + 3.5f, playerRadarY + 3f)
+          lineTo(playerRadarX, playerRadarY + 1.5f)
+          lineTo(playerRadarX - 3.5f, playerRadarY + 3f)
           close()
         }
         drawPath(
@@ -309,46 +309,46 @@ fun SanaaChaseMiniMap(
     Column(
       modifier = Modifier
         .fillMaxSize()
-        .padding(4.dp),
+        .padding(2.dp),
       verticalArrangement = Arrangement.SpaceBetween,
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       // Top Tag: Gate & Remaining Distance
       Surface(
         color = Color(0xCC000000),
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(3.dp),
         modifier = Modifier.padding(top = 1.dp)
       ) {
         Text(
           text = "🏁 ${distanceRemaining}m",
           color = GoldYemeniLight,
-          fontSize = 8.sp,
+          fontSize = 6.5.sp,
           fontWeight = FontWeight.Bold,
-          modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+          modifier = Modifier.padding(horizontal = 3.dp, vertical = 0.5.dp)
         )
       }
 
       // Bottom Status: Stealth or Active Police Count
       Surface(
         color = Color(0xDD0B131E),
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(3.dp),
         modifier = Modifier.padding(bottom = 1.dp)
       ) {
         if (isPlayerHiding) {
           Text(
             text = "🥷 مخفي",
             color = Color(0xFF22D3EE),
-            fontSize = 8.sp,
+            fontSize = 6.5.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+            modifier = Modifier.padding(horizontal = 3.dp, vertical = 0.5.dp)
           )
         } else {
           Text(
-            text = "🚨 ${policePursuers.size} دوريات",
+            text = "🚨 ${policePursuers.size}",
             color = if (policePursuers.isNotEmpty()) CrimsonRedLight else Color.LightGray,
-            fontSize = 8.sp,
+            fontSize = 6.5.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+            modifier = Modifier.padding(horizontal = 3.dp, vertical = 0.5.dp)
           )
         }
       }

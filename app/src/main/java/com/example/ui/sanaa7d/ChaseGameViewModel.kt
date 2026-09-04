@@ -85,11 +85,11 @@ enum class GameDifficulty(
 }
 
 data class ChaseCountdownState(
-  val timeLeftSeconds: Int = 120,
-  val totalDurationSeconds: Int = 120,
+  val timeLeftSeconds: Int = 300,
+  val totalDurationSeconds: Int = 300,
   val isLowTime: Boolean = false,
   val progressRatio: Float = 1.0f,
-  val formattedTime: String = "02:00"
+  val formattedTime: String = "05:00"
 )
 
 data class CollisionFeedbackState(
@@ -265,9 +265,9 @@ class ChaseGameViewModel @JvmOverloads constructor(
     _stealthState.value = if (isHiding) PlayerStealthMode.HIDDEN else PlayerStealthMode.EXPOSED
   }
 
-  fun updateCountdown(secondsRemaining: Int, totalSeconds: Int = 120) {
+  fun updateCountdown(secondsRemaining: Int, totalSeconds: Int = 300) {
     val clamped = secondsRemaining.coerceAtLeast(0)
-    val total = if (totalSeconds > 0) totalSeconds else 120
+    val total = if (totalSeconds > 0) totalSeconds else 300
     val ratio = (clamped.toFloat() / total.toFloat()).coerceIn(0f, 1f)
     val minutes = clamped / 60
     val seconds = clamped % 60

@@ -88,52 +88,52 @@ enum class Sanaa7DStage(
   STAGE_1_BAB_YEMEN(
     1,
     "المرحلة 1: زقازيق باب اليمن وسوق الملح 🏰",
-    "الهروب بالأقدام والباركور بين بيوت الطين ومتاجر التوابل هرباً من دوريات النقيب عادل",
+    "the city chase. (Shuwa'i Sana'a) - الهروب والباركور هرباً من دوريات الشرطة",
     "سوق الملح وباب اليمن",
-    350f,
-    250,
+    2500f,
+    600,
     1,
-    60
+    300 // 5 دقائق كاملة
   ),
   STAGE_2_QAMARIYA_ROOFTOPS(
     2,
     "المرحلة 2: قفز أسطح المنازل ونوافذ القمريات 🪟",
-    "تسلق الأبراج الطينية والقفز بين الأسطح والمزاريب وتفادي كشافات الشرطة",
+    "mountain scramble. Jibal al-Yaman - تسلق الأبراج الطينية وتفادي كشافات النجدة",
     "حارة القاسمي وبيوت الطين",
-    500f,
-    450,
+    2800f,
+    850,
     2,
-    75
+    320 // 5 دقائق و20 ثانية
   ),
   STAGE_3_DABAB_DRIFT_KENTUCKY(
     3,
     "المرحلة 3: هجولة الدباب الصنعاني في جولة كنتاكي 🚐",
-    "خطف باص الدباب والتفحيط بين الأزقة الضيقة والميادين وتشتيت دوريات النجدة",
+    "dabab drift. Kentucky Heist - التفحيط بالدباب والشاص بين الأزقة والميادين",
     "جولة كنتاكي وشارع الزبيري",
-    700f,
-    650,
+    3200f,
+    1200,
     3,
-    90
+    350 // 5 دقائق و50 ثانية
   ),
   STAGE_4_SABEEN_BARRICADES(
     4,
     "المرحلة 4: اقتحام حواجز قوى الأمن عند ميدان السبعين 🚧",
-    "حالة طوارئ 4 نجوم! اختراق الحواجز الشوكية وتفجير براميل الوقود بالألعاب النارية",
+    "AL KAMEEN. Sabeen Square - اختراق الحواجز الشوكية وتشتيت الدوريات بالألعاب النارية",
     "ميدان السبعين والتقاطعات الرئيسية",
-    950f,
-    900,
+    3600f,
+    1600,
     4,
-    110
+    380 // 6 دقائق و20 ثانية
   ),
   STAGE_5_WADI_DHAR_HEIST(
     5,
     "المرحلة 5: السطو الكبير والمخبأ السري في دار الحجر (5 نجوم) 👑",
-    "المعركة الختامية! تفادي مروحيات الشرطة وسيارات العقيد ناصر والوصول لقلعة دار الحجر",
+    "THE HANDOVER! Wadi Dhar Heist - تفادي مروحيات الشرطة وسيارات العقيد ناصر والوصول لدار الحجر",
     "وادي ظهر وقصر دار الحجر التاريخي",
-    1300f,
-    1500,
+    4000f,
+    2500,
     5,
-    140
+    420 // 7 دقائق
   )
 }
 
@@ -581,6 +581,7 @@ fun GtaSanaa7DChaseScreen(
 
   var currentStage by remember { mutableStateOf(Sanaa7DStage.STAGE_1_BAB_YEMEN) }
   var showStageSelector by remember { mutableStateOf(false) }
+  var showTacticalSettings by remember { mutableStateOf(false) }
   var showCharacterDossierDialog by remember { mutableStateOf(false) }
 
   // Game Engine & State (including Blur Pause state)
@@ -631,7 +632,7 @@ fun GtaSanaa7DChaseScreen(
   var score by remember { mutableIntStateOf(0) }
   var coinsCollected by remember { mutableIntStateOf(0) }
   var distanceCovered by remember { mutableFloatStateOf(0f) }
-  var timeLeft by remember { mutableIntStateOf(60) }
+  var timeLeft by remember { mutableIntStateOf(300) }
   var copsEvaded by remember { mutableIntStateOf(0) }
   var rooftopsCleared by remember { mutableIntStateOf(0) }
   var fireworksFired by remember { mutableIntStateOf(0) }
@@ -995,6 +996,14 @@ fun GtaSanaa7DChaseScreen(
     isStageVictory = false
     isPlaying = true
     showStageSelector = false
+    showTacticalSettings = false
+    showHeroProgressionDialog = false
+    showAmbientSoundDialog = false
+    showHeritageRadioDialog = false
+    showCharacterDossierDialog = false
+    showDailyChallengesDialog = false
+    showLevelProgressionDialog = false
+    showLeaderboardModal = false
 
     GameSoundEffects.playPoliceWhistle()
     GameSoundEffects.playJump()
@@ -1107,7 +1116,7 @@ fun GtaSanaa7DChaseScreen(
           else -> 0.013f
         } * gameSpeedMultiplier * heroSpeedMultiplier
 
-        distanceCovered += baseSpeed * 150f
+        distanceCovered += baseSpeed * 11f
         score = (distanceCovered * 15).toInt() + (coinsCollected * 40) + (copsEvaded * 150) + (rooftopsCleared * 80)
 
         if (currentStage == Sanaa7DStage.STAGE_2_QAMARIYA_ROOFTOPS || currentStage == Sanaa7DStage.STAGE_1_BAB_YEMEN) {
@@ -1709,18 +1718,20 @@ fun GtaSanaa7DChaseScreen(
       .fillMaxSize()
       .background(DarkBg)
   ) {
-    // 1. Top Bar
-    SanaaTopBar(
-      title = "حرامي صنعاء 7D (GTA Sana'a 7D)",
-      subtitle = "${currentStage.titleAr} • مطاردات أزقة وبيوت اليمن",
-      coins = stats.totalCoins + coinsCollected,
-      soundEnabled = stats.soundEnabled,
-      onSoundToggle = {
-        repository.toggleSound()
-        GameSoundEffects.isMuted = !stats.soundEnabled
-      },
-      onBackClick = onNavigateBack
-    )
+    // 1. Top Bar (shown only when paused or not in active gameplay to maximize 3D screen)
+    if (!isPlaying || isPaused || isGameOver || isStageVictory) {
+      SanaaTopBar(
+        title = "حرامي صنعاء 7D (GTA Sana'a 7D)",
+        subtitle = "${currentStage.titleAr} • مطاردات أزقة وبيوت اليمن",
+        coins = stats.totalCoins + coinsCollected,
+        soundEnabled = stats.soundEnabled,
+        onSoundToggle = {
+          repository.toggleSound()
+          GameSoundEffects.isMuted = !stats.soundEnabled
+        },
+        onBackClick = onNavigateBack
+      )
+    }
 
     Box(
       modifier = Modifier
@@ -1878,223 +1889,247 @@ fun GtaSanaa7DChaseScreen(
             }
 
             // Top-Right: GTA Wanted Level 5 Stars + Countdown Timer & Weather
-            GtaWantedLevelMinimalHud(
-              wantedStars = wantedStars,
-              timeLeft = timeLeft,
-              distance = distanceCovered.toInt(),
-              targetDistance = currentStage.targetDistance.toInt(),
-              weatherEmoji = currentWeather.iconEmoji,
-              cameraEmoji = cameraAngle.iconEmoji,
-              onWeatherClick = { cycleWeather() },
-              onCameraClick = { cycleCameraAngle() },
-              modifier = Modifier.testTag("hud_wanted_level")
-            )
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+              GtaWantedLevelMinimalHud(
+                wantedStars = wantedStars,
+                timeLeft = timeLeft,
+                distance = distanceCovered.toInt(),
+                targetDistance = currentStage.targetDistance.toInt(),
+                weatherEmoji = currentWeather.iconEmoji,
+                cameraEmoji = cameraAngle.iconEmoji,
+                onWeatherClick = { cycleWeather() },
+                onCameraClick = { cycleCameraAngle() },
+                modifier = Modifier.testTag("hud_wanted_level")
+              )
+
+              IconButton(
+                onClick = { showTacticalSettings = !showTacticalSettings },
+                modifier = Modifier
+                  .size(34.dp)
+                  .clip(CircleShape)
+                  .background(if (showTacticalSettings) SanaaGold else DarkSurface.copy(alpha = 0.90f))
+                  .border(1.2.dp, SanaaGold.copy(alpha = 0.8f), CircleShape)
+                  .testTag("btn_toggle_tactical_settings")
+              ) {
+                Text(
+                  text = if (showTacticalSettings) "✕" else "⚙️",
+                  fontSize = 13.sp,
+                  color = if (showTacticalSettings) DarkBg else SanaaGold
+                )
+              }
+            }
           }
 
-          Spacer(modifier = Modifier.height(4.dp))
+          // Expandable Secondary Cards (Only shown when user toggles ⚙️, keeping the 7D Canvas vast and unobstructed)
+          if (showTacticalSettings) {
+            Spacer(modifier = Modifier.height(4.dp))
 
-          // Dynamic Ambient Sound, Sana'a Hero Status & Police Dispatch Ticker
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            // Interactive Ambient Sound & Proximity Intensity Pill
-            Surface(
-              color = DarkBg.copy(alpha = 0.88f),
-              shape = RoundedCornerShape(8.dp),
-              border = androidx.compose.foundation.BorderStroke(1.dp, Color(ambientIntensity.colorHex)),
-              modifier = Modifier
-                .weight(1.1f)
-                .clickable { showAmbientSoundDialog = true }
-                .testTag("hud_ambient_sound_pill")
+            // Dynamic Ambient Sound, Sana'a Hero Status & Police Dispatch Ticker
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically
             ) {
-              Row(
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                verticalAlignment = Alignment.CenterVertically
+              // Interactive Ambient Sound & Proximity Intensity Pill
+              Surface(
+                color = DarkBg.copy(alpha = 0.88f),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(ambientIntensity.colorHex)),
+                modifier = Modifier
+                  .weight(1.1f)
+                  .clickable { showAmbientSoundDialog = true }
+                  .testTag("hud_ambient_sound_pill")
               ) {
-                Text(ambientIntensity.badgeEmoji, fontSize = 11.sp)
-                Spacer(modifier = Modifier.width(4.dp))
-                Column(modifier = Modifier.weight(1f)) {
+                Row(
+                  modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                  verticalAlignment = Alignment.CenterVertically
+                ) {
+                  Text(ambientIntensity.badgeEmoji, fontSize = 11.sp)
+                  Spacer(modifier = Modifier.width(4.dp))
+                  Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                      text = "🎵 ${ambientTrack.titleAr}",
+                      color = SanaaGold,
+                      fontSize = 8.5.sp,
+                      fontWeight = FontWeight.Bold,
+                      maxLines = 1
+                    )
+                    Text(
+                      text = "${ambientIntensity.titleAr} • ${ambientIntensity.tempoBpm} BPM",
+                      color = Color(ambientIntensity.colorHex),
+                      fontSize = 7.5.sp,
+                      fontWeight = FontWeight.SemiBold,
+                      maxLines = 1
+                    )
+                  }
+                }
+              }
+
+              Spacer(modifier = Modifier.width(4.dp))
+
+              // Sana'a Hero Status & Faster Movement Speed Mini Pill
+              Surface(
+                color = if (heroTier.isSanaaHeroStatus) Color(0xFF332002) else DarkBg.copy(alpha = 0.88f),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                  1.dp,
+                  if (heroTier.isSanaaHeroStatus) SanaaGold else Color(0xFFFF9100).copy(alpha = 0.8f)
+                ),
+                modifier = Modifier
+                  .clickable { showHeroProgressionDialog = true }
+                  .testTag("hud_hero_status_pill")
+              ) {
+                Row(
+                  modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                  verticalAlignment = Alignment.CenterVertically
+                ) {
+                  Text(heroTier.badgeEmoji, fontSize = 11.sp)
+                  Spacer(modifier = Modifier.width(3.dp))
+                  Column {
+                    Text(
+                      text = if (heroTier.isSanaaHeroStatus) "👑 بطل صنعاء" else heroTier.statusTitleAr,
+                      color = if (heroTier.isSanaaHeroStatus) SanaaGold else Color.White,
+                      fontSize = 8.sp,
+                      fontWeight = FontWeight.Black
+                    )
+                    Text(
+                      text = "⚡ +${heroTier.speedBoostPercent}% سرعة",
+                      color = Color(0xFF00E676),
+                      fontSize = 7.5.sp,
+                      fontWeight = FontWeight.Bold
+                    )
+                  }
+                }
+              }
+
+              Spacer(modifier = Modifier.width(4.dp))
+
+              Surface(
+                color = DarkBg.copy(alpha = 0.82f),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(0.8.dp, TaxiYellow.copy(alpha = 0.5f)),
+                modifier = Modifier.weight(1.0f)
+              ) {
+                Row(
+                  modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                  verticalAlignment = Alignment.CenterVertically
+                ) {
+                  Icon(Icons.Default.Notifications, contentDescription = null, tint = TaxiYellow, modifier = Modifier.size(11.dp))
+                  Spacer(modifier = Modifier.width(3.dp))
                   Text(
-                    text = "🎵 ${ambientTrack.titleAr}",
-                    color = SanaaGold,
-                    fontSize = 8.5.sp,
+                    text = policeRadioChatter,
+                    color = TaxiYellow,
+                    fontSize = 8.sp,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                  )
-                  Text(
-                    text = "${ambientIntensity.titleAr} • ${ambientIntensity.tempoBpm} BPM",
-                    color = Color(ambientIntensity.colorHex),
-                    fontSize = 7.5.sp,
-                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1
                   )
                 }
               }
             }
 
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Sana'a Hero Status & Faster Movement Speed Mini Pill
+            // ----------------------------------------------------
+            // Score Management & Difficulty Settings HUD
+            // ----------------------------------------------------
+            ChaseDifficultyAndScoreHud(
+              scoreState = scoreState,
+              currentDifficulty = difficultyState,
+              onDifficultySelected = { newDiff -> viewModel.setDifficulty(newDiff) },
+              onResetScore = { viewModel.resetSessionScore() },
+              modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // ----------------------------------------------------
+            // View Mode Switcher: 7D 3D Chase vs 2D Tactical Alleyway Grid Board
+            // ----------------------------------------------------
             Surface(
-              color = if (heroTier.isSanaaHeroStatus) Color(0xFF332002) else DarkBg.copy(alpha = 0.88f),
-              shape = RoundedCornerShape(8.dp),
-              border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                if (heroTier.isSanaaHeroStatus) SanaaGold else Color(0xFFFF9100).copy(alpha = 0.8f)
-              ),
-              modifier = Modifier
-                .clickable { showHeroProgressionDialog = true }
-                .testTag("hud_hero_status_pill")
+              color = DarkSurface.copy(alpha = 0.90f),
+              shape = RoundedCornerShape(10.dp),
+              border = androidx.compose.foundation.BorderStroke(1.dp, SanaaGold.copy(alpha = 0.6f)),
+              modifier = Modifier.fillMaxWidth()
             ) {
               Row(
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(4.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
               ) {
-                Text(heroTier.badgeEmoji, fontSize = 11.sp)
-                Spacer(modifier = Modifier.width(3.dp))
-                Column {
+                Button(
+                  onClick = { isTacticalGridMode = false },
+                  colors = ButtonDefaults.buttonColors(
+                    containerColor = if (!isTacticalGridMode) SanaaGold else Color.Transparent
+                  ),
+                  shape = RoundedCornerShape(8.dp),
+                  contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                  modifier = Modifier
+                    .weight(1f)
+                    .height(32.dp)
+                ) {
                   Text(
-                    text = if (heroTier.isSanaaHeroStatus) "👑 بطل صنعاء" else heroTier.statusTitleAr,
-                    color = if (heroTier.isSanaaHeroStatus) SanaaGold else Color.White,
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Black
+                    text = "🎬 منظور 7D المجسم",
+                    color = if (!isTacticalGridMode) DarkBg else Color.LightGray,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
                   )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Button(
+                  onClick = { isTacticalGridMode = true },
+                  colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isTacticalGridMode) TaxiYellow else Color.Transparent
+                  ),
+                  shape = RoundedCornerShape(8.dp),
+                  contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                  modifier = Modifier
+                    .weight(1f)
+                    .height(32.dp)
+                    .testTag("toggle_tactical_grid_board_btn")
+                ) {
                   Text(
-                    text = "⚡ +${heroTier.speedBoostPercent}% سرعة",
-                    color = Color(0xFF00E676),
-                    fontSize = 7.5.sp,
+                    text = "🗺️ خريطة أزقة صنعاء (Grid)",
+                    color = if (isTacticalGridMode) DarkBg else Color.LightGray,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                   )
                 }
               }
             }
 
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Surface(
-              color = DarkBg.copy(alpha = 0.82f),
-              shape = RoundedCornerShape(8.dp),
-              border = androidx.compose.foundation.BorderStroke(0.8.dp, TaxiYellow.copy(alpha = 0.5f)),
-              modifier = Modifier.weight(1.0f)
-            ) {
-              Row(
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                verticalAlignment = Alignment.CenterVertically
-              ) {
-                Icon(Icons.Default.Notifications, contentDescription = null, tint = TaxiYellow, modifier = Modifier.size(11.dp))
-                Spacer(modifier = Modifier.width(3.dp))
-                Text(
-                  text = policeRadioChatter,
-                  color = TaxiYellow,
-                  fontSize = 8.sp,
-                  fontWeight = FontWeight.Bold,
-                  maxLines = 1
-                )
-              }
+            if (isTacticalGridMode) {
+              Spacer(modifier = Modifier.height(4.dp))
+              SanaaAlleywayGridGameBoard(
+                difficulty = difficultyState,
+                onCollisionDetected = { colType, penalty ->
+                  viewModel.triggerCollisionFeedback(colType, "💥 تصادم مع دوريات أزقة صنعاء!", penalty)
+                },
+                onScoreEarned = { pts, reason ->
+                  viewModel.addScorePoints(pts, reason)
+                  score += pts
+                  coinsCollected += (pts / 5).coerceAtLeast(1)
+                },
+                modifier = Modifier.fillMaxWidth()
+              )
             }
-          }
 
-          Spacer(modifier = Modifier.height(4.dp))
-
-          // ----------------------------------------------------
-          // Score Management & Difficulty Settings HUD
-          // ----------------------------------------------------
-          ChaseDifficultyAndScoreHud(
-            scoreState = scoreState,
-            currentDifficulty = difficultyState,
-            onDifficultySelected = { newDiff -> viewModel.setDifficulty(newDiff) },
-            onResetScore = { viewModel.resetSessionScore() },
-            modifier = Modifier.fillMaxWidth()
-          )
-
-          Spacer(modifier = Modifier.height(4.dp))
-
-          // ----------------------------------------------------
-          // View Mode Switcher: 7D 3D Chase vs 2D Tactical Alleyway Grid Board
-          // ----------------------------------------------------
-          Surface(
-            color = DarkSurface.copy(alpha = 0.90f),
-            shape = RoundedCornerShape(10.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, SanaaGold.copy(alpha = 0.6f)),
-            modifier = Modifier.fillMaxWidth()
-          ) {
-            Row(
-              modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-              horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-              Button(
-                onClick = { isTacticalGridMode = false },
-                colors = ButtonDefaults.buttonColors(
-                  containerColor = if (!isTacticalGridMode) SanaaGold else Color.Transparent
-                ),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                modifier = Modifier
-                  .weight(1f)
-                  .height(32.dp)
-              ) {
-                Text(
-                  text = "🎬 منظور 7D المجسم",
-                  color = if (!isTacticalGridMode) DarkBg else Color.LightGray,
-                  fontSize = 10.sp,
-                  fontWeight = FontWeight.Bold
-                )
-              }
-              Spacer(modifier = Modifier.width(4.dp))
-              Button(
-                onClick = { isTacticalGridMode = true },
-                colors = ButtonDefaults.buttonColors(
-                  containerColor = if (isTacticalGridMode) TaxiYellow else Color.Transparent
-                ),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                modifier = Modifier
-                  .weight(1f)
-                  .height(32.dp)
-                  .testTag("toggle_tactical_grid_board_btn")
-              ) {
-                Text(
-                  text = "🗺️ خريطة أزقة صنعاء (Grid)",
-                  color = if (isTacticalGridMode) DarkBg else Color.LightGray,
-                  fontSize = 10.sp,
-                  fontWeight = FontWeight.Bold
-                )
-              }
-            }
-          }
-
-          if (isTacticalGridMode) {
             Spacer(modifier = Modifier.height(4.dp))
-            SanaaAlleywayGridGameBoard(
-              difficulty = difficultyState,
-              onCollisionDetected = { colType, penalty ->
-                viewModel.triggerCollisionFeedback(colType, "💥 تصادم مع دوريات أزقة صنعاء!", penalty)
-              },
-              onScoreEarned = { pts, reason ->
-                viewModel.addScorePoints(pts, reason)
-                score += pts
-                coinsCollected += (pts / 5).coerceAtLeast(1)
-              },
+
+            // ----------------------------------------------------
+            // Integrated Countdown Timer, Pulsing Stealth Indicator & Level Bar
+            // ----------------------------------------------------
+            ChaseHudCountdownAndStealthIndicator(
+              stealthMode = stealthMode,
+              countdownState = countdownState,
+              levelState = levelProgressionUiState,
+              onLevelClick = { showLevelProgressionDialog = true },
               modifier = Modifier.fillMaxWidth()
             )
           }
-
-          Spacer(modifier = Modifier.height(4.dp))
-
-          // ----------------------------------------------------
-          // Integrated Countdown Timer, Pulsing Stealth Indicator & Level Bar
-          // ----------------------------------------------------
-          ChaseHudCountdownAndStealthIndicator(
-            stealthMode = stealthMode,
-            countdownState = countdownState,
-            levelState = levelProgressionUiState,
-            onLevelClick = { showLevelProgressionDialog = true },
-            modifier = Modifier.fillMaxWidth()
-          )
 
           // In-Game Floating XP Reward Notice
           recentXpEarnedNotice?.let { xpNotice ->
@@ -2415,7 +2450,29 @@ fun GtaSanaa7DChaseScreen(
         }
       }
 
-      // 5. Clean & Minimalist Game Victory Screen (MISSION PASSED!)
+      // 5. Tactical Mini-Map Radar Overlay (Positioned in Bottom-End of 7D Chase Canvas)
+      if (isPlaying && !isGameOver && !isStageVictory) {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 12.dp, end = 12.dp),
+          contentAlignment = Alignment.BottomEnd
+        ) {
+          SanaaChaseMiniMap(
+            playerWorldX = playerX,
+            isPlayerHiding = isPlayerHiding,
+            isVehicleHijacked = isVehicleHijacked,
+            policePursuers = policePursuers,
+            gangThugs = gangThugs,
+            hidingSpots = hidingSpots,
+            distanceCovered = distanceCovered,
+            targetDistance = currentStage.targetDistance,
+            modifier = Modifier.testTag("sanaa_chase_minimap")
+          )
+        }
+      }
+
+      // 6. Clean & Minimalist Game Victory Screen (MISSION PASSED!)
       if (isStageVictory) {
         val earnedCoins = currentStage.rewardCoins.coerceAtLeast(450)
         val earnedXp = lastEarnedXpBreakdown?.totalXpEarned ?: 725
@@ -2765,7 +2822,9 @@ fun GtaSanaa7DChaseScreen(
         tonalElevation = 8.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, SanaaGold.copy(alpha = 0.35f)),
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
       ) {
         Column(
           modifier = Modifier
@@ -2893,7 +2952,12 @@ fun GtaSanaa7DChaseScreen(
             }
 
             Button(
-              onClick = { showHeritageRadioDialog = true },
+              onClick = {
+                YemeniHeritageRadio.nextTrack()
+                stealthBonusNotice = "📻 ${YemeniHeritageRadio.currentTrack.titleAr}"
+                stealthNoticeTimer = 70
+                GameSoundEffects.playWalkieTalkie()
+              },
               colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
               shape = RoundedCornerShape(8.dp),
               modifier = Modifier.weight(0.85f).height(36.dp).testTag("btn_7d_radio")
@@ -2902,7 +2966,12 @@ fun GtaSanaa7DChaseScreen(
             }
 
             Button(
-              onClick = { showDailyChallengesDialog = true },
+              onClick = {
+                val completed = dailyChallenges.count { it.isCompleted }
+                stealthBonusNotice = "🎯 التحديات: $completed من ${dailyChallenges.size} منجزة"
+                stealthNoticeTimer = 70
+                GameSoundEffects.playRadioBeep()
+              },
               colors = ButtonDefaults.buttonColors(
                 containerColor = if (dailyChallenges.any { it.isCompleted }) Color(0xFF1B5E20) else DarkSurfaceVariant
               ),
@@ -2913,34 +2982,19 @@ fun GtaSanaa7DChaseScreen(
             }
 
             Button(
-              onClick = { showStageSelector = true },
-              colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
+              onClick = {
+                GameSoundEffects.playCarHorn()
+                policePursuers.filter { it.worldZ in 0f..45f }.forEach { it.isStunned = true }
+                stealthBonusNotice = "📢 إطلاق بوري وصافرة صنعاء لتشتيت الدوريات!"
+                stealthNoticeTimer = 60
+              },
+              colors = ButtonDefaults.buttonColors(containerColor = SanaaGold.copy(alpha = 0.85f)),
               shape = RoundedCornerShape(8.dp),
-              modifier = Modifier.weight(0.85f).height(36.dp).testTag("btn_7d_stages")
+              modifier = Modifier.weight(0.85f).height(36.dp).testTag("btn_7d_horn")
             ) {
-              Text("🗺️", color = Color.White, fontSize = 11.sp)
+              Text("📢", color = DarkBg, fontSize = 11.sp)
             }
           }
-        }
-
-        // 5. Tactical Mini-Map Radar Overlay
-        Box(
-          modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 100.dp, end = 12.dp),
-          contentAlignment = Alignment.BottomEnd
-        ) {
-          SanaaChaseMiniMap(
-            playerWorldX = playerX,
-            isPlayerHiding = isPlayerHiding,
-            isVehicleHijacked = isVehicleHijacked,
-            policePursuers = policePursuers,
-            gangThugs = gangThugs,
-            hidingSpots = hidingSpots,
-            distanceCovered = distanceCovered,
-            targetDistance = currentStage.targetDistance,
-            modifier = Modifier.testTag("sanaa_chase_minimap")
-          )
         }
       }
     }
@@ -2988,7 +3042,7 @@ fun GtaSanaa7DChaseScreen(
   }
 
   // Sana'a Hero Progression Roadmap & Speed Boost Unlocks Modal
-  if (showHeroProgressionDialog) {
+  if (showHeroProgressionDialog && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     SanaaHeroProgressionModal(
       stats = stats,
       isDevMode = isDevActive,
@@ -2997,14 +3051,14 @@ fun GtaSanaa7DChaseScreen(
   }
 
   // Sana'a Traditional Ambient Sound & Proximity Intensity Live Mixer Modal
-  if (showAmbientSoundDialog) {
+  if (showAmbientSoundDialog && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     SanaaAmbientSoundModal(
       onDismiss = { showAmbientSoundDialog = false }
     )
   }
 
   // Stage Selector Dialog (Direct 1-Tap stage jump in Sana'a)
-  if (showStageSelector) {
+  if (showStageSelector && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     AlertDialog(
       onDismissRequest = { showStageSelector = false },
       title = {
@@ -3114,14 +3168,14 @@ fun GtaSanaa7DChaseScreen(
   }
 
   // Yemeni Heritage Music & Poetry Radio Modal
-  if (showHeritageRadioDialog) {
+  if (showHeritageRadioDialog && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     YemeniHeritageRadioModal(
       onDismiss = { showHeritageRadioDialog = false }
     )
   }
 
   // Character Dossier Dialog (Detailed view of real photos and backstories)
-  if (showCharacterDossierDialog) {
+  if (showCharacterDossierDialog && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     AlertDialog(
       onDismissRequest = { showCharacterDossierDialog = false },
       title = {
@@ -3169,7 +3223,7 @@ fun GtaSanaa7DChaseScreen(
   }
 
   // Daily Renewable Challenges Dialog
-  if (showDailyChallengesDialog) {
+  if (showDailyChallengesDialog && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     DailySanaaChallengesDialog(
       challenges = dailyChallenges,
       onDismiss = { showDailyChallengesDialog = false },
@@ -3178,7 +3232,7 @@ fun GtaSanaa7DChaseScreen(
   }
 
   // Player Level & XP Progression Roadmap Dialog
-  if (showLevelProgressionDialog) {
+  if (showLevelProgressionDialog && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     PlayerLevelProgressionDialog(
       stats = stats,
       onDismiss = { showLevelProgressionDialog = false }
@@ -3186,7 +3240,7 @@ fun GtaSanaa7DChaseScreen(
   }
 
   // Top 10 High Scores & Best Chase Times Leaderboard Modal
-  if (showLeaderboardModal) {
+  if (showLeaderboardModal && (!isPlaying || isPaused || isGameOver || isStageVictory)) {
     androidx.compose.ui.window.Dialog(
       onDismissRequest = { showLeaderboardModal = false },
       properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
@@ -3979,6 +4033,21 @@ fun Sanaa7DAlleyCanvas(
       )
     }
 
+    // 2.5. Ancient Sana'a Mud & Earth Ground Terrain Base (Rich Earthy Bedrock)
+    drawRect(
+      brush = Brush.verticalGradient(
+        colors = listOf(
+          Color(0xFF3E2723),
+          Color(0xFF2D1B17),
+          Color(0xFF1B110E)
+        ),
+        startY = horizonY,
+        endY = canvasH
+      ),
+      topLeft = Offset(0f, horizonY),
+      size = Size(canvasW, canvasH - horizonY)
+    )
+
     // 3. 7D Perspective Mud Brick Buildings & Stained Glass Qamariya Windows
     for (b in buildings) {
       val z = b.distanceZ.coerceAtLeast(1f)
@@ -4260,147 +4329,355 @@ fun Sanaa7DAlleyCanvas(
       }
     }
 
-    // 5. 7D Obstacles (Spice carts, Barrels, Clotheslines, Barricades)
+    // 5. 7D Obstacles (Spice carts, Mountain Goats, Barrels, Clotheslines, Barricades)
     for (obs in obstacles) {
       val z = obs.worldZ.coerceAtLeast(1f)
-      val scale = (200f / (z + 40f)).coerceIn(0.08f, 2.0f)
+      val scale = (200f / (z + 40f)).coerceIn(0.12f, 2.5f)
       val roadW = (alleyRightAtBottom - alleyLeftAtBottom) * scale
       val screenX = vanishX + (obs.worldX * roadW * 0.5f)
       val screenY = horizonY + (canvasH - horizonY) * scale
 
       if (screenY in horizonY..canvasH && scale > 0.12f) {
+        val obsW = 55f * scale
+        val obsH = 48f * scale
+
+        when {
+          obs.typeName.contains("ماعز") -> {
+            // 3D Yemeni Mountain Goat (ماعز صنعاني جبلي - الصورة 3)
+            // Body
+            drawRoundRect(
+              color = Color(0xFF8D6E63),
+              topLeft = Offset(screenX - obsW * 0.45f, screenY - obsH * 0.7f),
+              size = Size(obsW * 0.9f, obsH * 0.48f),
+              cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f * scale, 6f * scale)
+            )
+            // White fur patch
+            drawOval(
+              color = Color(0xFFECEFF1),
+              topLeft = Offset(screenX - obsW * 0.2f, screenY - obsH * 0.65f),
+              size = Size(obsW * 0.45f, obsH * 0.35f)
+            )
+            // Head & Curved Horns
+            drawCircle(
+              color = Color(0xFF6D4C41),
+              center = Offset(screenX - obsW * 0.4f, screenY - obsH * 0.8f),
+              radius = 12f * scale
+            )
+            // Horns
+            drawLine(
+              color = Color(0xFFD7CCC8),
+              start = Offset(screenX - obsW * 0.4f, screenY - obsH * 0.85f),
+              end = Offset(screenX - obsW * 0.55f, screenY - obsH * 1.15f),
+              strokeWidth = 3.5f * scale
+            )
+            drawLine(
+              color = Color(0xFFD7CCC8),
+              start = Offset(screenX - obsW * 0.35f, screenY - obsH * 0.85f),
+              end = Offset(screenX - obsW * 0.3f, screenY - obsH * 1.18f),
+              strokeWidth = 3.5f * scale
+            )
+            // Trotting legs
+            drawLine(color = Color(0xFF4E342E), start = Offset(screenX - obsW * 0.35f, screenY - obsH * 0.25f), end = Offset(screenX - obsW * 0.35f, screenY), strokeWidth = 3.2f * scale)
+            drawLine(color = Color(0xFF4E342E), start = Offset(screenX + obsW * 0.25f, screenY - obsH * 0.25f), end = Offset(screenX + obsW * 0.25f, screenY), strokeWidth = 3.2f * scale)
+          }
+          obs.typeName.contains("بهارات") || obs.typeName.contains("توابل") -> {
+            // 3D Spice Market Burlap Sacks & Wooden Cart (سوق الملح والتوابل - الصور 1 و2 و3)
+            // Wooden Cart Frame
+            drawRect(
+              color = Color(0xFF5D4037),
+              topLeft = Offset(screenX - obsW * 0.5f, screenY - obsH * 0.4f),
+              size = Size(obsW, obsH * 0.35f)
+            )
+            // Burlap Sacks: Golden Turmeric (Yellow), Red Sumac (Deep Red), Zaatar (Green)
+            drawCircle(color = Color(0xFFFFB300), center = Offset(screenX - obsW * 0.25f, screenY - obsH * 0.55f), radius = 14f * scale)
+            drawCircle(color = Color(0xFFC62828), center = Offset(screenX, screenY - obsH * 0.65f), radius = 15f * scale)
+            drawCircle(color = Color(0xFF2E7D32), center = Offset(screenX + obsW * 0.25f, screenY - obsH * 0.55f), radius = 14f * scale)
+            // Spoke Wheels
+            drawCircle(color = Color(0xFF212121), center = Offset(screenX - obsW * 0.35f, screenY - 5f * scale), radius = 8f * scale)
+            drawCircle(color = Color(0xFF212121), center = Offset(screenX + obsW * 0.35f, screenY - 5f * scale), radius = 8f * scale)
+          }
+          obs.typeName.contains("فخار") || obs.typeName.contains("ماء") -> {
+            // Terracotta Zir / Water Amphora
+            drawRoundRect(
+              color = Color(0xFFD84315),
+              topLeft = Offset(screenX - obsW * 0.35f, screenY - obsH * 0.8f),
+              size = Size(obsW * 0.7f, obsH * 0.8f),
+              cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f * scale, 10f * scale)
+            )
+            drawRect(
+              color = Color(0xFFBF360C),
+              topLeft = Offset(screenX - obsW * 0.18f, screenY - obsH * 0.95f),
+              size = Size(obsW * 0.36f, obsH * 0.18f)
+            )
+          }
+          else -> {
+            if (obs.isHigh) {
+              // High Clothesline
+              drawLine(
+                color = Color(0xFFB0BEC5),
+                start = Offset(screenX - obsW * 0.8f, screenY - obsH * 1.3f),
+                end = Offset(screenX + obsW * 0.8f, screenY - obsH * 1.3f),
+                strokeWidth = 3f * scale
+              )
+              drawRect(color = Color(0xFFE53935), topLeft = Offset(screenX - obsW * 0.4f, screenY - obsH * 1.25f), size = Size(obsW * 0.32f, obsH * 0.55f))
+              drawRect(color = Color(0xFF1E88E5), topLeft = Offset(screenX + obsW * 0.1f, screenY - obsH * 1.25f), size = Size(obsW * 0.32f, obsH * 0.55f))
+            } else {
+              // Police Checkpoint Barricade
+              drawRect(
+                color = Color(0xFFD32F2F),
+                topLeft = Offset(screenX - obsW * 0.6f, screenY - obsH * 0.55f),
+                size = Size(obsW * 1.2f, obsH * 0.45f)
+              )
+              drawRect(
+                color = Color.White,
+                topLeft = Offset(screenX - obsW * 0.2f, screenY - obsH * 0.55f),
+                size = Size(obsW * 0.4f, obsH * 0.45f)
+              )
+            }
+          }
+        }
+
         safeDrawText(
           textMeasurer = textMeasurer,
-          text = "${obs.iconEmoji}\n${obs.nameAr}",
-          topLeft = Offset(screenX - (30f * scale), if (obs.isHigh) screenY - (60f * scale) else screenY - (25f * scale)),
-          style = TextStyle(color = TaxiYellow, fontSize = (10f * scale).coerceAtLeast(7f).sp, fontWeight = FontWeight.Bold),
-          allocatedWidth = 120f * scale,
-          allocatedHeight = 50f * scale
-        )
-      }
-    }
-
-    // 6. 7D Police Pursuers & Cruisers
-    for (cop in policeList) {
-      val z = cop.worldZ.coerceAtLeast(1f)
-      val scale = (200f / (z + 40f)).coerceIn(0.08f, 2.2f)
-      val roadW = (alleyRightAtBottom - alleyLeftAtBottom) * scale
-      val screenX = vanishX + (cop.worldX * roadW * 0.5f)
-      val screenY = horizonY + (canvasH - horizonY) * scale
-
-      if (screenY in horizonY..canvasH && scale > 0.15f) {
-        // Red/Blue Flashing Siren Glow on Alley Walls & Ground
-        drawCircle(
-          color = if (System.currentTimeMillis() % 400 < 200) PoliceRedLight.copy(alpha = 0.40f) else PoliceAccent.copy(alpha = 0.40f),
-          center = Offset(screenX, screenY - 20f * scale),
-          radius = 38f * scale
-        )
-
-        safeDrawText(
-          textMeasurer = textMeasurer,
-          text = if (cop.isVehicle) "🚓 نجدة صنعاء" else if (cop.isStunned) "👮‍♂️ فاقد الأثر ❓" else "👮‍♂️ دورية شرطة",
-          topLeft = Offset(screenX - 25f * scale, screenY - 35f * scale),
-          style = TextStyle(color = if (cop.isStunned) Color.Yellow else Color.White, fontSize = (10f * scale).coerceAtLeast(8f).sp, fontWeight = FontWeight.Bold),
-          allocatedWidth = 130f * scale,
+          text = obs.nameAr,
+          topLeft = Offset(screenX - (45f * scale), if (obs.isHigh) screenY - (obsH * 1.5f) else screenY - (obsH * 1.15f)),
+          style = TextStyle(color = TaxiYellow, fontSize = (10f * scale).coerceAtLeast(7.5f).sp, fontWeight = FontWeight.Bold),
+          allocatedWidth = 140f * scale,
           allocatedHeight = 40f * scale
         )
       }
     }
 
-    // 6.5. 7D Gang Thugs & Loot Carriers (عصابات شوارع صنعاء للنهب والتسليم)
+    // 6. 7D Police Pursuers & Cruisers (دوريات شرطة نجدة صنعاء - الصور 1 و2)
+    for (cop in policeList) {
+      val z = cop.worldZ.coerceAtLeast(1f)
+      val scale = (200f / (z + 40f)).coerceIn(0.12f, 2.6f)
+      val roadW = (alleyRightAtBottom - alleyLeftAtBottom) * scale
+      val screenX = vanishX + (cop.worldX * roadW * 0.5f)
+      val screenY = horizonY + (canvasH - horizonY) * scale
+
+      if (screenY in horizonY..canvasH && scale > 0.14f) {
+        if (cop.isVehicle) {
+          // Toyota Land Cruiser 70s Police Patrol Cruiser (Image 1 & 2)
+          val carW = 95f * scale
+          val carH = 58f * scale
+
+          // Ground shadow
+          drawOval(
+            color = Color.Black.copy(alpha = 0.55f),
+            topLeft = Offset(screenX - carW * 0.55f, screenY - 6f * scale),
+            size = Size(carW * 1.1f, 15f * scale)
+          )
+
+          // White Cruiser Body
+          drawRoundRect(
+            color = Color(0xFFFAFAFA),
+            topLeft = Offset(screenX - carW * 0.5f, screenY - carH),
+            size = Size(carW, carH),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f * scale, 8f * scale)
+          )
+
+          // Dark Navy Police Stripe across side
+          drawRect(
+            color = Color(0xFF0D47A1),
+            topLeft = Offset(screenX - carW * 0.5f, screenY - carH * 0.58f),
+            size = Size(carW, carH * 0.28f)
+          )
+
+          // Front Steel Bull-Bar Bumper
+          drawRect(
+            color = Color(0xFF263238),
+            topLeft = Offset(screenX - carW * 0.45f, screenY - carH * 0.32f),
+            size = Size(carW * 0.9f, 7f * scale)
+          )
+
+          // Dual Headlights
+          drawCircle(color = Color(0xFFFFF9C4), center = Offset(screenX - carW * 0.35f, screenY - carH * 0.26f), radius = 5.5f * scale)
+          drawCircle(color = Color(0xFFFFF9C4), center = Offset(screenX + carW * 0.35f, screenY - carH * 0.26f), radius = 5.5f * scale)
+
+          // Roof Emergency Siren Lightbar: GREEN ON LEFT, RED ON RIGHT! (Authentic Yemeni Police)
+          val isBlinkLeft = (System.currentTimeMillis() % 350) < 175
+          drawRect(
+            color = if (isBlinkLeft) Color(0xFF00E676) else Color(0xFF1B5E20),
+            topLeft = Offset(screenX - carW * 0.35f, screenY - carH - 10f * scale),
+            size = Size(carW * 0.32f, 9f * scale)
+          )
+          drawRect(
+            color = if (!isBlinkLeft) Color(0xFFFF1744) else Color(0xFFB71C1C),
+            topLeft = Offset(screenX + carW * 0.03f, screenY - carH - 10f * scale),
+            size = Size(carW * 0.32f, 9f * scale)
+          )
+
+          // Siren Radiant Halo on cobblestones
+          drawCircle(
+            color = (if (isBlinkLeft) Color(0xFF00E676) else Color(0xFFFF1744)).copy(alpha = 0.40f),
+            center = Offset(screenX, screenY - carH - 5f * scale),
+            radius = 36f * scale
+          )
+
+          safeDrawText(
+            textMeasurer = textMeasurer,
+            text = "الشرطة POLICE 🚓",
+            topLeft = Offset(screenX - carW * 0.45f, screenY - carH * 0.55f),
+            style = TextStyle(color = Color.White, fontSize = (8.5f * scale).coerceAtLeast(6.5f).sp, fontWeight = FontWeight.Black),
+            allocatedWidth = carW * 0.9f,
+            allocatedHeight = carH * 0.3f
+          )
+        } else {
+          // Foot Police Officer (Image 1 & 2)
+          val copW = 38f * scale
+          val copH = 72f * scale
+
+          // Trousers
+          drawRect(
+            color = Color(0xFF0D47A1),
+            topLeft = Offset(screenX - copW * 0.45f, screenY - copH * 0.45f),
+            size = Size(copW * 0.9f, copH * 0.45f)
+          )
+
+          // Sky-Blue Police Uniform Shirt
+          drawRoundRect(
+            color = Color(0xFF81D4FA),
+            topLeft = Offset(screenX - copW * 0.5f, screenY - copH * 0.85f),
+            size = Size(copW, copH * 0.45f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f * scale, 4f * scale)
+          )
+
+          // Navy Necktie & Gold Shoulder Epaulets
+          drawRect(color = Color(0xFF0D47A1), topLeft = Offset(screenX - 2.5f * scale, screenY - copH * 0.82f), size = Size(5f * scale, copH * 0.22f))
+          drawCircle(color = Color(0xFFFFD54F), center = Offset(screenX - copW * 0.42f, screenY - copH * 0.82f), radius = 3.5f * scale)
+          drawCircle(color = Color(0xFFFFD54F), center = Offset(screenX + copW * 0.42f, screenY - copH * 0.82f), radius = 3.5f * scale)
+
+          // Head & Tanned Skin
+          drawCircle(color = Color(0xFFF0BD88), center = Offset(screenX, screenY - copH * 0.95f), radius = 10f * scale)
+
+          // Peaked Navy Service Cap with Gold Crest
+          drawRoundRect(
+            color = Color(0xFF0D47A1),
+            topLeft = Offset(screenX - copW * 0.45f, screenY - copH * 1.14f),
+            size = Size(copW * 0.9f, 10f * scale),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(3f * scale, 3f * scale)
+          )
+          drawCircle(color = Color(0xFFFFD54F), center = Offset(screenX, screenY - copH * 1.08f), radius = 3f * scale)
+
+          // Classic Mustache
+          drawRect(color = Color(0xFF212121), topLeft = Offset(screenX - 4.5f * scale, screenY - copH * 0.92f), size = Size(9f * scale, 2.8f * scale))
+
+          safeDrawText(
+            textMeasurer = textMeasurer,
+            text = if (cop.isStunned) "👮‍♂️ فاقد الأثر ❓" else "👮‍♂️ ضابط شرطة",
+            topLeft = Offset(screenX - 35f * scale, screenY - copH - 22f * scale),
+            style = TextStyle(color = if (cop.isStunned) Color.Yellow else Color.White, fontSize = (9.5f * scale).coerceAtLeast(7.5f).sp, fontWeight = FontWeight.Bold),
+            allocatedWidth = 140f * scale,
+            allocatedHeight = 40f * scale
+          )
+        }
+      }
+    }
+
+    // 6.5. 7D Gang Thugs & Loot Carriers (عصابات شوارع صنعاء - الصورة 3)
     for (thug in gangList) {
       val z = thug.worldZ.coerceAtLeast(1f)
-      val scale = (200f / (z + 40f)).coerceIn(0.08f, 2.2f)
+      val scale = (200f / (z + 40f)).coerceIn(0.12f, 2.6f)
       val roadW = (alleyRightAtBottom - alleyLeftAtBottom) * scale
       val screenX = vanishX + (thug.worldX * roadW * 0.5f)
       val screenY = horizonY + (canvasH - horizonY) * scale
 
       if (screenY in horizonY..canvasH && scale > 0.12f) {
-        val thugW = 38f * scale
-        val thugH = 62f * scale
+        val thugW = 44f * scale
+        val thugH = 75f * scale
 
         if (thug.isBoundInRopes) {
-          // Bound & Looted Gang Member in Ropes
+          // Bound & Looted Gang Member in Ropes (الصورة 3 البانل 3)
           drawOval(
             color = Color.Black.copy(alpha = 0.5f),
             topLeft = Offset(screenX - thugW * 0.6f, screenY - 8f * scale),
-            size = Size(thugW * 1.2f, 12f * scale)
+            size = Size(thugW * 1.2f, 14f * scale)
           )
 
           drawRoundRect(
             color = Color(0xFF37474F),
-            topLeft = Offset(screenX - thugW * 0.5f, screenY - thugH * 0.7f),
-            size = Size(thugW, thugH * 0.7f),
+            topLeft = Offset(screenX - thugW * 0.5f, screenY - thugH * 0.75f),
+            size = Size(thugW, thugH * 0.75f),
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f * scale, 6f * scale)
           )
 
-          // Ropes wrapped
-          for (rIdx in 1..4) {
+          // Hands raised up in surrender
+          drawLine(color = Color(0xFFE0A96D), start = Offset(screenX - thugW * 0.45f, screenY - thugH * 0.7f), end = Offset(screenX - thugW * 0.65f, screenY - thugH * 0.95f), strokeWidth = 4f * scale)
+          drawLine(color = Color(0xFFE0A96D), start = Offset(screenX + thugW * 0.45f, screenY - thugH * 0.7f), end = Offset(screenX + thugW * 0.65f, screenY - thugH * 0.95f), strokeWidth = 4f * scale)
+
+          // Thick Yellow Manila Ropes wrapped securely
+          for (rIdx in 1..5) {
             drawLine(
               color = Color(0xFFFFD54F),
-              start = Offset(screenX - thugW * 0.5f, screenY - thugH * (0.15f + rIdx * 0.12f)),
-              end = Offset(screenX + thugW * 0.5f, screenY - thugH * (0.15f + rIdx * 0.12f)),
-              strokeWidth = 3f * scale
+              start = Offset(screenX - thugW * 0.5f, screenY - thugH * (0.12f + rIdx * 0.11f)),
+              end = Offset(screenX + thugW * 0.5f, screenY - thugH * (0.12f + rIdx * 0.11f)),
+              strokeWidth = 3.5f * scale
             )
           }
 
           safeDrawText(
             textMeasurer = textMeasurer,
-            text = "🪢 مقبوض عليه ومسلوب!\n(جاهز للتسليم 👮‍♂️)",
-            topLeft = Offset(screenX - 45f * scale, screenY - thugH - 24f * scale),
-            style = TextStyle(color = GangNeonGreen, fontSize = (9f * scale).coerceAtLeast(7.5f).sp, fontWeight = FontWeight.Bold),
-            allocatedWidth = 140f * scale,
+            text = "🪢 مقبوض عليه بالحبال!\n(جاهز للتسليم للشرطة 👮‍♂️)",
+            topLeft = Offset(screenX - 55f * scale, screenY - thugH - 28f * scale),
+            style = TextStyle(color = GangNeonGreen, fontSize = (9.5f * scale).coerceAtLeast(8f).sp, fontWeight = FontWeight.Bold),
+            allocatedWidth = 160f * scale,
             allocatedHeight = 50f * scale
           )
         } else {
-          // Active Running Gang Thug
+          // Active Running Robber from Image 3
           drawOval(
             color = Color.Black.copy(alpha = 0.5f),
             topLeft = Offset(screenX - thugW * 0.6f, screenY - 6f * scale),
-            size = Size(thugW * 1.2f, 12f * scale)
+            size = Size(thugW * 1.2f, 13f * scale)
           )
 
-          // Dark Robe / Leather Jacket
+          // Dark Charcoal / Brown Zip Jacket
           drawRoundRect(
-            color = Color(0xFF1E272C),
-            topLeft = Offset(screenX - thugW * 0.5f, screenY - thugH),
-            size = Size(thugW, thugH),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f * scale, 8f * scale)
+            color = Color(0xFF37474F),
+            topLeft = Offset(screenX - thugW * 0.5f, screenY - thugH * 0.8f),
+            size = Size(thugW, thugH * 0.45f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f * scale, 6f * scale)
           )
 
-          // Red Gang Bandana
+          // Blue Denim Jeans
           drawRect(
-            color = Color(0xFFD50000),
-            topLeft = Offset(screenX - thugW * 0.5f, screenY - thugH * 0.82f),
-            size = Size(thugW, 8f * scale)
+            color = Color(0xFF1565C0),
+            topLeft = Offset(screenX - thugW * 0.42f, screenY - thugH * 0.35f),
+            size = Size(thugW * 0.84f, thugH * 0.35f)
           )
 
-          // Head
-          drawCircle(
-            color = Color(0xFF8D6E63),
-            center = Offset(screenX, screenY - thugH - 8f * scale),
-            radius = 10f * scale
+          // Head with Panicked Expression from Image 3
+          drawCircle(color = Color(0xFFE0A96D), center = Offset(screenX, screenY - thugH * 0.92f), radius = 10f * scale)
+
+          // Black Knit Beanie / Skull Cap
+          drawRoundRect(
+            color = Color(0xFF212121),
+            topLeft = Offset(screenX - thugW * 0.35f, screenY - thugH * 1.15f),
+            size = Size(thugW * 0.7f, 11f * scale),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f * scale, 4f * scale)
           )
 
-          // Stolen Gold / Loot Bag
+          // Wide panicked eyes looking back in terror
+          drawCircle(color = Color.White, center = Offset(screenX - 4f * scale, screenY - thugH * 0.95f), radius = 2.8f * scale)
+          drawCircle(color = Color.Black, center = Offset(screenX - 4f * scale, screenY - thugH * 0.95f), radius = 1.3f * scale)
+          drawCircle(color = Color.White, center = Offset(screenX + 4f * scale, screenY - thugH * 0.95f), radius = 2.8f * scale)
+          drawCircle(color = Color.Black, center = Offset(screenX + 4f * scale, screenY - thugH * 0.95f), radius = 1.3f * scale)
+
+          // Open screaming mouth
+          drawOval(color = Color(0xFF3E2723), topLeft = Offset(screenX - 3.5f * scale, screenY - thugH * 0.88f), size = Size(7f * scale, 5.5f * scale))
+
+          // Stolen Gold Loot Burlap Sack
           drawCircle(
-            color = Color(0xFFFFD600).copy(alpha = 0.90f),
+            color = Color(0xFFFFD600).copy(alpha = 0.95f),
             center = Offset(screenX + thugW * 0.45f, screenY - thugH * 0.45f),
-            radius = 11f * scale
-          )
-          safeDrawText(
-            textMeasurer = textMeasurer,
-            text = "💰",
-            topLeft = Offset(screenX + thugW * 0.20f, screenY - thugH * 0.62f),
-            style = TextStyle(fontSize = (11f * scale).coerceAtLeast(7.5f).sp),
-            allocatedWidth = 40f * scale,
-            allocatedHeight = 40f * scale
+            radius = 12f * scale
           )
 
           safeDrawText(
             textMeasurer = textMeasurer,
             text = "🦹‍♂️ ${thug.nameAr}\n[${thug.lootName}]",
-            topLeft = Offset(screenX - 45f * scale, screenY - thugH - 30f * scale),
+            topLeft = Offset(screenX - 45f * scale, screenY - thugH - 32f * scale),
             style = TextStyle(color = Color(0xFFFFD54F), fontSize = (9.5f * scale).coerceAtLeast(7.5f).sp, fontWeight = FontWeight.Bold),
             allocatedWidth = 140f * scale,
             allocatedHeight = 50f * scale
@@ -4482,142 +4759,321 @@ fun Sanaa7DAlleyCanvas(
       )
     }
 
-    // 9. Main Hero: Mazen (زعيم المشاغبين) or Hijacked Dabab
+    // 9. Main Hero: Mazen (زعيم المشاغبين - مستنسخ بدقة 3D ضخمة من الصور المرفقة) or Hijacked Yellow Toyota Truck
     val playerScreenX = vanishX + (playerX * (canvasW * 0.38f))
     val playerScreenY = (canvasH * 0.82f) - (playerY * 95f)
 
     if (isVehicle) {
-      // Dabab / Shas 3D Car Render (شاص تويوتا أصفر / دباب صنعاء)
-      val carW = 95.dp.toPx()
-      val carH = 58.dp.toPx()
+      // 3D Classic Yellow Toyota Hilux / Pickup Truck (شاص تويوتا هايلوكس أصفر كلاسيكي - الصورة 1 "تهريب السيارات في صنعاء")
+      val carW = 230.dp.toPx()
+      val carH = 135.dp.toPx()
 
+      // Deep ground shadow under the truck
       drawOval(
-        color = Color.Black.copy(alpha = 0.55f),
-        topLeft = Offset(playerScreenX - (carW * 0.5f), canvasH * 0.84f),
-        size = Size(carW, 20.dp.toPx())
+        color = Color.Black.copy(alpha = 0.65f),
+        topLeft = Offset(playerScreenX - (carW * 0.52f), canvasH * 0.85f),
+        size = Size(carW * 1.04f, 32.dp.toPx())
       )
 
-      val isShas = vehicleType.contains("شاص") || vehicleType.contains("تويوتا")
-
-      if (isShas) {
-        // Yellow Toyota Shas Pickup Truck (بيك آب شاص تويوتا أصفر)
-        // Cabin
-        drawRoundRect(
-          color = TaxiYellow,
-          topLeft = Offset(playerScreenX - (carW * 0.45f), playerScreenY - carH),
-          size = Size(carW * 0.90f, carH * 0.85f),
-          cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f, 10f)
-        )
-        // Windshield
-        drawRect(
-          color = Color(0xFF00E5FF).copy(alpha = 0.75f),
-          topLeft = Offset(playerScreenX - (carW * 0.35f), playerScreenY - (carH * 0.90f)),
-          size = Size(carW * 0.70f, carH * 0.35f)
-        )
-        // Shas Rear Bed (صندوق الشاص الخلفي)
-        drawRect(
-          color = Color(0xFFF57F17),
-          topLeft = Offset(playerScreenX - (carW * 0.42f), playerScreenY - (carH * 0.45f)),
-          size = Size(carW * 0.84f, carH * 0.40f)
-        )
-        // Headlights
-        drawCircle(color = Color(0xFFFFF59D), center = Offset(playerScreenX - (carW * 0.32f), playerScreenY - (carH * 0.15f)), radius = 6.dp.toPx())
-        drawCircle(color = Color(0xFFFFF59D), center = Offset(playerScreenX + (carW * 0.32f), playerScreenY - (carH * 0.15f)), radius = 6.dp.toPx())
-
-        safeDrawText(
-          textMeasurer = textMeasurer,
-          text = "🛻 شاص تويوتا أصفر (هجولة يمنية 7D)",
-          topLeft = Offset(playerScreenX - 55.dp.toPx(), playerScreenY - carH - 20.dp.toPx()),
-          style = TextStyle(color = SanaaGold, fontSize = 10.sp, fontWeight = FontWeight.Bold),
-          allocatedWidth = 220.dp.toPx(),
-          allocatedHeight = 30.dp.toPx()
-        )
-      } else {
-        // Dabab Yellow Minibus
-        drawRoundRect(
-          color = TaxiYellow,
-          topLeft = Offset(playerScreenX - (carW * 0.5f), playerScreenY - carH),
-          size = Size(carW, carH),
-          cornerRadius = androidx.compose.ui.geometry.CornerRadius(12f, 12f)
-        )
-
-        drawRect(
-          color = Color(0xFF00E5FF).copy(alpha = 0.7f),
-          topLeft = Offset(playerScreenX - (carW * 0.38f), playerScreenY - (carH * 0.85f)),
-          size = Size(carW * 0.76f, carH * 0.42f)
-        )
-
-        safeDrawText(
-          textMeasurer = textMeasurer,
-          text = "🚐 دباب صنعاء (هجولة 7D)",
-          topLeft = Offset(playerScreenX - 45.dp.toPx(), playerScreenY - carH - 18.dp.toPx()),
-          style = TextStyle(color = SanaaGold, fontSize = 10.sp, fontWeight = FontWeight.Bold),
-          allocatedWidth = 200.dp.toPx(),
-          allocatedHeight = 30.dp.toPx()
-        )
-      }
-    } else {
-      // Running Kid Hero: Mazen (زعيم المشاغبين)
+      // Spinning rim dust clouds bursting behind wheels
       drawOval(
-        color = Color.Black.copy(alpha = if (isPlayerHiding) 0.85f else 0.55f),
-        topLeft = Offset(playerScreenX - 25.dp.toPx(), canvasH * 0.84f),
-        size = Size(50.dp.toPx(), 14.dp.toPx())
+        color = Color(0xFFBCAAA4).copy(alpha = 0.60f),
+        topLeft = Offset(playerScreenX - (carW * 0.55f), canvasH * 0.83f),
+        size = Size(45.dp.toPx(), 24.dp.toPx())
+      )
+      drawOval(
+        color = Color(0xFFBCAAA4).copy(alpha = 0.60f),
+        topLeft = Offset(playerScreenX + (carW * 0.32f), canvasH * 0.83f),
+        size = Size(45.dp.toPx(), 24.dp.toPx())
       )
 
-      val heroW = 42.dp.toPx()
-      val heroH = if (isPlayerHiding) 45.dp.toPx() else 65.dp.toPx()
-
-      // Crouching / Shadowed Athletic Jacket when hiding
+      // 1. Yellow Hilux Truck Cab & Body (Image 1)
       drawRoundRect(
-        color = if (isPlayerHiding) Color(0xFF0D1B2A) else Color(0xFF1A237E),
-        topLeft = Offset(playerScreenX - (heroW * 0.5f), playerScreenY - heroH),
-        size = Size(heroW, heroH),
+        color = Color(0xFFFBC02D), // Vibrant Mustard/Taxi Yellow
+        topLeft = Offset(playerScreenX - (carW * 0.45f), playerScreenY - carH),
+        size = Size(carW * 0.90f, carH * 0.85f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(18f, 18f)
+      )
+
+      // 2. Front Chrome Grille & "TOYOTA" Badge
+      drawRoundRect(
+        color = Color(0xFF263238),
+        topLeft = Offset(playerScreenX - (carW * 0.32f), playerScreenY - (carH * 0.42f)),
+        size = Size(carW * 0.64f, carH * 0.28f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f)
+      )
+      safeDrawText(
+        textMeasurer = textMeasurer,
+        text = "TOYOTA",
+        topLeft = Offset(playerScreenX - 25.dp.toPx(), playerScreenY - (carH * 0.35f)),
+        style = TextStyle(color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp),
+        allocatedWidth = 60.dp.toPx(),
+        allocatedHeight = 25.dp.toPx()
+      )
+
+      // 3. Dual Round Chrome Headlights with Halogen Beam & Amber Blinkers (Image 1)
+      drawCircle(color = Color(0xFFFFF9C4), center = Offset(playerScreenX - (carW * 0.36f), playerScreenY - (carH * 0.28f)), radius = 12.dp.toPx())
+      drawCircle(color = Color(0xFFFF9800), center = Offset(playerScreenX - (carW * 0.42f), playerScreenY - (carH * 0.28f)), radius = 6.dp.toPx())
+      drawCircle(color = Color(0xFFFFF9C4), center = Offset(playerScreenX + (carW * 0.36f), playerScreenY - (carH * 0.28f)), radius = 12.dp.toPx())
+      drawCircle(color = Color(0xFFFF9800), center = Offset(playerScreenX + (carW * 0.42f), playerScreenY - (carH * 0.28f)), radius = 6.dp.toPx())
+
+      // 4. Polished Steel Front Bumper & Yemeni License Plate: "صنعاء 5"
+      drawRoundRect(
+        color = Color(0xFFECEFF1),
+        topLeft = Offset(playerScreenX - (carW * 0.46f), playerScreenY - (carH * 0.16f)),
+        size = Size(carW * 0.92f, carH * 0.16f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f)
+      )
+      drawRect(
+        color = Color(0xFFFFFFFF),
+        topLeft = Offset(playerScreenX - 22.dp.toPx(), playerScreenY - (carH * 0.14f)),
+        size = Size(44.dp.toPx(), 14.dp.toPx())
+      )
+      safeDrawText(
+        textMeasurer = textMeasurer,
+        text = "صنعاء 5",
+        topLeft = Offset(playerScreenX - 18.dp.toPx(), playerScreenY - (carH * 0.15f)),
+        style = TextStyle(color = Color.Black, fontSize = 8.sp, fontWeight = FontWeight.Bold),
+        allocatedWidth = 40.dp.toPx(),
+        allocatedHeight = 16.dp.toPx()
+      )
+
+      // 5. Curved Windshield with Sky Reflection
+      drawRoundRect(
+        color = Color(0xFF4FC3F7).copy(alpha = 0.85f),
+        topLeft = Offset(playerScreenX - (carW * 0.38f), playerScreenY - (carH * 0.92f)),
+        size = Size(carW * 0.76f, carH * 0.42f),
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f, 10f)
       )
 
-      // Traditional Yemeni Embroidered Sash / Belt
-      drawRect(
-        color = if (isPlayerHiding) GangNeonGreen else SanaaGold,
-        topLeft = Offset(playerScreenX - (heroW * 0.5f), playerScreenY - (heroH * 0.45f)),
-        size = Size(heroW, 8.dp.toPx())
-      )
-
-      // Head & Dark Hair
+      // 6. Mazen Leaning Out Driver Window Smiling & Steering (Image 1 replica!)
+      // Head
       drawCircle(
-        color = if (isPlayerHiding) Color(0xFFD7CCC8) else Color(0xFFFFCC80),
-        center = Offset(playerScreenX, playerScreenY - heroH - 12.dp.toPx()),
+        color = Color(0xFFF0BD88),
+        center = Offset(playerScreenX - (carW * 0.28f), playerScreenY - (carH * 0.72f)),
         radius = 14.dp.toPx()
       )
-      drawCircle(
-        color = Color(0xFF212121),
-        center = Offset(playerScreenX, playerScreenY - heroH - 18.dp.toPx()),
-        radius = 12.dp.toPx()
+      // Styled Dark Hair
+      drawRoundRect(
+        color = Color(0xFF1A1A1A),
+        topLeft = Offset(playerScreenX - (carW * 0.33f), playerScreenY - (carH * 0.82f)),
+        size = Size(20.dp.toPx(), 12.dp.toPx()),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f, 4f)
       )
-
-      // Wooden Toy Rifle Aiming Forward
+      // Arm leaning out on door sill
       drawLine(
-        color = Color(0xFF8D6E63),
-        start = Offset(playerScreenX, playerScreenY - (heroH * 0.6f)),
-        end = Offset(playerScreenX + 35.dp.toPx(), playerScreenY - (heroH * 0.75f)),
-        strokeWidth = 5.dp.toPx()
+        color = Color(0xFFF0BD88),
+        start = Offset(playerScreenX - (carW * 0.28f), playerScreenY - (carH * 0.60f)),
+        end = Offset(playerScreenX - (carW * 0.45f), playerScreenY - (carH * 0.50f)),
+        strokeWidth = 6.dp.toPx()
       )
 
-      // Action Tag
+      // 7. Heavy-duty All-Terrain Wheels
+      drawCircle(color = Color(0xFF212121), center = Offset(playerScreenX - (carW * 0.38f), playerScreenY - (carH * 0.02f)), radius = 18.dp.toPx())
+      drawCircle(color = Color(0xFF78909C), center = Offset(playerScreenX - (carW * 0.38f), playerScreenY - (carH * 0.02f)), radius = 9.dp.toPx())
+      drawCircle(color = Color(0xFF212121), center = Offset(playerScreenX + (carW * 0.38f), playerScreenY - (carH * 0.02f)), radius = 18.dp.toPx())
+      drawCircle(color = Color(0xFF78909C), center = Offset(playerScreenX + (carW * 0.38f), playerScreenY - (carH * 0.02f)), radius = 9.dp.toPx())
+
+      safeDrawText(
+        textMeasurer = textMeasurer,
+        text = "🛻 هايلوكس تويوتا 1985 (تهريب صنعاء 7D)",
+        topLeft = Offset(playerScreenX - 70.dp.toPx(), playerScreenY - carH - 24.dp.toPx()),
+        style = TextStyle(color = SanaaGold, fontSize = 11.5.sp, fontWeight = FontWeight.Black),
+        allocatedWidth = 240.dp.toPx(),
+        allocatedHeight = 30.dp.toPx()
+      )
+    } else {
+      // 3D Hero Mazen (زعيم المشاغبين - مازن: مستنسخ بدقة كاملة بحجم 3D ضخم من الصور 1 و3 و4)
+      val heroW = 95.dp.toPx()
+      val heroH = if (isPlayerHiding) 90.dp.toPx() else 145.dp.toPx()
+
+      // Ground Shadow
+      drawOval(
+        color = Color.Black.copy(alpha = if (isPlayerHiding) 0.85f else 0.55f),
+        topLeft = Offset(playerScreenX - 40.dp.toPx(), canvasH * 0.85f),
+        size = Size(80.dp.toPx(), 22.dp.toPx())
+      )
+
+      // 1. Dynamic 3D Running Athletic Legs & Sneakers
+      val legCycle = (distance * 18f).toInt() % 360
+      val leftLegAngle = kotlin.math.sin(Math.toRadians(legCycle.toDouble())).toFloat() * 18.dp.toPx()
+      val rightLegAngle = -leftLegAngle
+
+      // Left Leg (Navy blue track pants with white side stripe)
+      drawLine(
+        color = Color(0xFF0D47A1),
+        start = Offset(playerScreenX - 12.dp.toPx(), playerScreenY - (heroH * 0.38f)),
+        end = Offset(playerScreenX - 12.dp.toPx() + leftLegAngle, playerScreenY - (heroH * 0.05f)),
+        strokeWidth = 10.dp.toPx()
+      )
+      // Left Sneaker with white rubber sole & red accent
+      drawRoundRect(
+        color = Color(0xFF212121),
+        topLeft = Offset(playerScreenX - 18.dp.toPx() + leftLegAngle, playerScreenY - (heroH * 0.06f)),
+        size = Size(18.dp.toPx(), 9.dp.toPx()),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(3f, 3f)
+      )
+      drawRect(
+        color = Color.White,
+        topLeft = Offset(playerScreenX - 18.dp.toPx() + leftLegAngle, playerScreenY - (heroH * 0.02f)),
+        size = Size(18.dp.toPx(), 3.dp.toPx())
+      )
+
+      // Right Leg
+      drawLine(
+        color = Color(0xFF1565C0),
+        start = Offset(playerScreenX + 12.dp.toPx(), playerScreenY - (heroH * 0.38f)),
+        end = Offset(playerScreenX + 12.dp.toPx() + rightLegAngle, playerScreenY - (heroH * 0.05f)),
+        strokeWidth = 10.dp.toPx()
+      )
+      // Right Sneaker
+      drawRoundRect(
+        color = Color(0xFF212121),
+        topLeft = Offset(playerScreenX + 6.dp.toPx() + rightLegAngle, playerScreenY - (heroH * 0.06f)),
+        size = Size(18.dp.toPx(), 9.dp.toPx()),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(3f, 3f)
+      )
+      drawRect(
+        color = Color.White,
+        topLeft = Offset(playerScreenX + 6.dp.toPx() + rightLegAngle, playerScreenY - (heroH * 0.02f)),
+        size = Size(18.dp.toPx(), 3.dp.toPx())
+      )
+
+      // 2. Torso - Mazen's Signature T-Shirt (مستنسخ تماماً من الصور 1 و3 و4)
+      // Sky Blue lower body & short sleeves
+      drawRoundRect(
+        color = Color(0xFF42A5F5), // Vibrant Sky Blue
+        topLeft = Offset(playerScreenX - (heroW * 0.35f), playerScreenY - (heroH * 0.72f)),
+        size = Size(heroW * 0.70f, heroH * 0.36f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(12f, 12f)
+      )
+
+      // Crisp White horizontal chest bar across shoulders
+      drawRect(
+        color = Color(0xFFFFFFFF),
+        topLeft = Offset(playerScreenX - (heroW * 0.35f), playerScreenY - (heroH * 0.74f)),
+        size = Size(heroW * 0.70f, heroH * 0.12f)
+      )
+
+      // Red Shield Chest Emblem: "SANAA 7D"
+      drawCircle(
+        color = Color(0xFFE53935),
+        center = Offset(playerScreenX, playerScreenY - (heroH * 0.68f)),
+        radius = 7.dp.toPx()
+      )
+
+      // Deep Navy Blue upper chest, shoulders & collar
+      drawRoundRect(
+        color = Color(0xFF0D1B2A), // Deep Navy
+        topLeft = Offset(playerScreenX - (heroW * 0.35f), playerScreenY - (heroH * 0.85f)),
+        size = Size(heroW * 0.70f, heroH * 0.14f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f, 10f)
+      )
+
+      // 3. Traditional Yemeni Embroidered Leather Sash & Golden Jambiya Dagger
+      // Green & Gold Embroidered Sash
+      drawRect(
+        color = Color(0xFF2E7D32),
+        topLeft = Offset(playerScreenX - (heroW * 0.36f), playerScreenY - (heroH * 0.44f)),
+        size = Size(heroW * 0.72f, 12.dp.toPx())
+      )
+      drawRect(
+        color = SanaaGold,
+        topLeft = Offset(playerScreenX - (heroW * 0.36f), playerScreenY - (heroH * 0.41f)),
+        size = Size(heroW * 0.72f, 3.dp.toPx())
+      )
+
+      // Sculpted Golden Jambiya Curved Dagger (خنجر الجنبية الصنعانية المذهبة)
+      drawLine(
+        color = Color(0xFFFFD700),
+        start = Offset(playerScreenX - 5.dp.toPx(), playerScreenY - (heroH * 0.44f)),
+        end = Offset(playerScreenX + 16.dp.toPx(), playerScreenY - (heroH * 0.32f)),
+        strokeWidth = 6.dp.toPx()
+      )
+      drawCircle(
+        color = Color(0xFFFFB300),
+        center = Offset(playerScreenX - 6.dp.toPx(), playerScreenY - (heroH * 0.45f)),
+        radius = 5.dp.toPx()
+      )
+
+      // 4. Arms & Lasso / Slingshot
+      // Left arm swinging with run
+      drawLine(
+        color = Color(0xFFF0BD88),
+        start = Offset(playerScreenX - (heroW * 0.32f), playerScreenY - (heroH * 0.75f)),
+        end = Offset(playerScreenX - (heroW * 0.45f) - leftLegAngle * 0.5f, playerScreenY - (heroH * 0.55f)),
+        strokeWidth = 8.dp.toPx()
+      )
+      // Right arm holding golden lasso rope coil (Image 3 Panel 3)
+      drawLine(
+        color = Color(0xFFF0BD88),
+        start = Offset(playerScreenX + (heroW * 0.32f), playerScreenY - (heroH * 0.75f)),
+        end = Offset(playerScreenX + (heroW * 0.48f) - rightLegAngle * 0.5f, playerScreenY - (heroH * 0.58f)),
+        strokeWidth = 8.dp.toPx()
+      )
+      // Coiled Yellow Lasso Rope
+      drawCircle(
+        color = Color(0xFFFFCA28),
+        center = Offset(playerScreenX + (heroW * 0.50f), playerScreenY - (heroH * 0.58f)),
+        radius = 10.dp.toPx(),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
+      )
+
+      // 5. Head & Facial Features - Cloned from Images 1, 3, and 4
+      // Warm Tanned Yemeni Skin Complexion
+      drawCircle(
+        color = if (isPlayerHiding) Color(0xFFD7CCC8) else Color(0xFFF0BD88),
+        center = Offset(playerScreenX, playerScreenY - (heroH * 0.95f)),
+        radius = 20.dp.toPx()
+      )
+
+      // Styled Jet-Black Hair with Forward Swept Locks (Images 1, 3, 4)
+      drawOval(
+        color = Color(0xFF1A1A1A),
+        topLeft = Offset(playerScreenX - 22.dp.toPx(), playerScreenY - (heroH * 1.08f)),
+        size = Size(44.dp.toPx(), 22.dp.toPx())
+      )
+      // Hair locks on forehead
+      drawCircle(color = Color(0xFF263238), center = Offset(playerScreenX - 8.dp.toPx(), playerScreenY - (heroH * 0.99f)), radius = 7.dp.toPx())
+      drawCircle(color = Color(0xFF263238), center = Offset(playerScreenX + 8.dp.toPx(), playerScreenY - (heroH * 0.99f)), radius = 7.dp.toPx())
+
+      // Expressive Dark Eyes with White Specular Highlights
+      drawCircle(color = Color.White, center = Offset(playerScreenX - 7.dp.toPx(), playerScreenY - (heroH * 0.95f)), radius = 4.5.dp.toPx())
+      drawCircle(color = Color(0xFF212121), center = Offset(playerScreenX - 7.dp.toPx(), playerScreenY - (heroH * 0.95f)), radius = 2.8.dp.toPx())
+      drawCircle(color = Color.White, center = Offset(playerScreenX - 6.dp.toPx(), playerScreenY - (heroH * 0.96f)), radius = 1.dp.toPx())
+
+      drawCircle(color = Color.White, center = Offset(playerScreenX + 7.dp.toPx(), playerScreenY - (heroH * 0.95f)), radius = 4.5.dp.toPx())
+      drawCircle(color = Color(0xFF212121), center = Offset(playerScreenX + 7.dp.toPx(), playerScreenY - (heroH * 0.95f)), radius = 2.8.dp.toPx())
+      drawCircle(color = Color.White, center = Offset(playerScreenX + 8.dp.toPx(), playerScreenY - (heroH * 0.96f)), radius = 1.dp.toPx())
+
+      // Energetic Confident Smile with White Teeth
+      drawOval(
+        color = Color(0xFF3E2723),
+        topLeft = Offset(playerScreenX - 6.dp.toPx(), playerScreenY - (heroH * 0.88f)),
+        size = Size(12.dp.toPx(), 6.dp.toPx())
+      )
+      drawRect(
+        color = Color.White,
+        topLeft = Offset(playerScreenX - 4.dp.toPx(), playerScreenY - (heroH * 0.88f)),
+        size = Size(8.dp.toPx(), 2.5.dp.toPx())
+      )
+
+      // 6. Action Tag
       safeDrawText(
         textMeasurer = textMeasurer,
         text = when {
-          isPlayerHiding -> "🥷 متخفٍ (خط النظر مكسور 👁️❌)"
-          playerAction == SanaaPlayerActionState.ROOFTOP_JUMPING -> "🦘 قفز الأسطح!"
-          playerAction == SanaaPlayerActionState.SLIDING -> "⛷️ انزلاق سريع!"
-          else -> "🏃‍♂️ الزعيم مازن"
+          isPlayerHiding -> "🥷 الزعيم مازن (متخفٍ في أزقة صنعاء)"
+          playerAction == SanaaPlayerActionState.ROOFTOP_JUMPING -> "🦘 قفز الأسطح الطينية!"
+          playerAction == SanaaPlayerActionState.SLIDING -> "⛷️ انزلاق سريع في الزقاق!"
+          else -> "🏃‍♂️ البطل مازن (زعيم المشاغبين 7D)"
         },
-        topLeft = Offset(playerScreenX - 45.dp.toPx(), playerScreenY - heroH - 36.dp.toPx()),
+        topLeft = Offset(playerScreenX - 65.dp.toPx(), playerScreenY - heroH - 30.dp.toPx()),
         style = TextStyle(
           color = if (isPlayerHiding) GangNeonGreen else SanaaGold,
-          fontSize = 11.sp,
-          fontWeight = FontWeight.Bold
+          fontSize = 12.sp,
+          fontWeight = FontWeight.Black
         ),
-        allocatedWidth = 220.dp.toPx(),
+        allocatedWidth = 240.dp.toPx(),
         allocatedHeight = 35.dp.toPx()
       )
     }

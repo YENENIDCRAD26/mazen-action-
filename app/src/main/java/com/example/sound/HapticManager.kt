@@ -39,6 +39,9 @@ object HapticManager {
   }
 
   fun vibrateClick() = vibrateMovement()
+  fun vibrateLightTap() = vibrateMovement()
+  fun vibrateHeavyImpact() = vibrateCollision()
+  fun vibrateExplosion() = vibrateCollision()
 
   /**
    * Heavy rumble on collision with police or obstacle
