@@ -38,6 +38,12 @@ interface HighScoreDao {
   @Query("SELECT MIN(chaseTimeSeconds) FROM high_scores WHERE playerName = :playerName AND chaseTimeSeconds > 0")
   suspend fun getPersonalBestTime(playerName: String): Float?
 
+  @Query("SELECT * FROM high_scores WHERE id = :id")
+  suspend fun getScoreById(id: Long): HighScoreEntity?
+
+  @Query("SELECT * FROM high_scores ORDER BY id DESC LIMIT 1")
+  suspend fun getLatestScore(): HighScoreEntity?
+
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertHighScore(entry: HighScoreEntity): Long
 

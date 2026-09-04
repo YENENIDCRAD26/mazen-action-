@@ -5,26 +5,36 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.local.AppDatabase
+import com.example.data.local.HighScoreEntity
 import com.example.sound.GameSoundEffects
 import com.example.sound.HapticManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.math.*
 
 /**
@@ -34,6 +44,7 @@ import kotlin.math.*
  * - Action buttons on bottom-right (Shoot, Vehicle, Jump/Sprint, Hero Switch, Weapon Switch)
  * - Complete absence of intrusive dialog boxes and notifications
  * - Authentic GTA Mobile HUD (Radar Mini-Map, Clock, Green Cash Counter, Health/Armor, Location)
+ * - Game Over overlay with Room DB score persistence and immediate restart without closing app
  */
 @Composable
 fun UnifiedGtaGameEngineScreen(
@@ -41,6 +52,11 @@ fun UnifiedGtaGameEngineScreen(
   onNavigateBack: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
+  val context = LocalContext.current
+  val coroutineScope = rememberCoroutineScope()
+  val db = remember { AppDatabase.getDatabase(context) }
+  val highScoreDao = remember { db.highScoreDao() }
+
   // Current Selected Hero (1 of 4 heroes, switchable anytime!)
   var currentHeroIndex by remember { mutableIntStateOf(UnifiedHeroId.values().indexOf(initialHeroId).coerceAtLeast(0)) }
   val currentHero = UnifiedHeroId.values()[currentHeroIndex]
@@ -68,6 +84,13 @@ fun UnifiedGtaGameEngineScreen(
   var chaseRemainingSeconds by remember { mutableIntStateOf(300) } // 5 minutes chase timer
   var timerAccumulator by remember { mutableFloatStateOf(0f) }
 
+  // Game Over & Room DB persistence state
+  var isGameOver by remember { mutableStateOf(false) }
+  var gameOverReason by remember { mutableStateOf("WASTED - سقط البطل في الاشتباك 💀") }
+  var savedScoreRecord by remember { mutableStateOf<HighScoreEntity?>(null) }
+  var globalBestScore by remember { mutableIntStateOf(0) }
+  var isSavingToDb by remember { mutableStateOf(false) }
+
   // Projectiles
   val projectiles = remember { mutableStateListOf<GameProjectile>() }
 
@@ -85,13 +108,86 @@ fun UnifiedGtaGameEngineScreen(
   var inputVectorX by remember { mutableFloatStateOf(0f) }
   var inputVectorY by remember { mutableFloatStateOf(0f) }
 
+  // Function to restart the game session immediately without closing the app
+  fun restartGameSession() {
+    GameSoundEffects.playNitroBoost()
+    HapticManager.vibrateHeavyImpact()
+    playerHealth = 1.0f
+    playerArmor = 1.0f
+    cashAmount = 80872
+    gameTimeMinutes = 21 * 60 + 13
+    chaseRemainingSeconds = 300
+    timerAccumulator = 0f
+    playerX = 0f
+    playerZ = 0f
+    playerAngleDeg = 0f
+    isWalking = false
+    isRunning = false
+    isJumping = false
+    jumpHeight = 0f
+    isInsideVehicle = false
+    inputVectorX = 0f
+    inputVectorY = 0f
+    projectiles.clear()
+    trafficVehicles.clear()
+    trafficVehicles.addAll(
+      listOf(
+        TrafficCar(1, 25f, -1, "SEDAN", Color(0xFFC2185B)),
+        TrafficCar(2, 55f, 1, "DABAB", Color(0xFFFBC02D)),
+        TrafficCar(3, 85f, -1, "POLICE", Color(0xFF1976D2)),
+        TrafficCar(4, 115f, 1, "SEDAN", Color(0xFF388E3C))
+      )
+    )
+    savedScoreRecord = null
+    isPaused = false
+    isGameOver = false
+  }
+
+  // Function to trigger Game Over, calculate score, and persist into Room Database
+  fun triggerGameOver(reason: String) {
+    if (isGameOver) return
+    isGameOver = true
+    gameOverReason = reason
+    HapticManager.vibrateExplosion()
+
+    val calculatedScore = ((playerZ * 15).toInt() + (cashAmount / 10) + (300 - chaseRemainingSeconds) * 8).coerceAtLeast(150)
+    val elapsedSeconds = (300 - chaseRemainingSeconds).toFloat().coerceAtLeast(1f)
+
+    coroutineScope.launch {
+      isSavingToDb = true
+      val entity = HighScoreEntity(
+        playerName = currentHero.heroNameAr,
+        score = calculatedScore,
+        mode = "GTA_SANAA_UNIFIED",
+        difficulty = "NORMAL",
+        dateEpoch = System.currentTimeMillis(),
+        titleAr = currentHero.heroTitleAr,
+        rankBadgeEmoji = when (currentHero) {
+          UnifiedHeroId.MAZEN -> "👑"
+          UnifiedHeroId.FARIS -> "🧗‍♂️"
+          UnifiedHeroId.AMMAR -> "🚐"
+          UnifiedHeroId.SALEM -> "🎒"
+        },
+        coinsEarned = (cashAmount / 50).coerceAtLeast(25),
+        chaseTimeSeconds = elapsedSeconds,
+        stageName = "باب اليمن - أزقة صنعاء",
+        isPersonalBest = true
+      )
+      val newId = highScoreDao.insertHighScore(entity)
+      val fromDb = highScoreDao.getScoreById(newId) ?: entity.copy(id = newId)
+      savedScoreRecord = fromDb
+      globalBestScore = highScoreDao.getGlobalHighScore() ?: calculatedScore
+      isSavingToDb = false
+    }
+  }
+
   // Game Loop Coroutine (60 FPS smooth physics & distance progression)
-  LaunchedEffect(isPaused, currentHero, isInsideVehicle) {
+  LaunchedEffect(isPaused, isGameOver, currentHero, isInsideVehicle) {
     var lastTimeNanos = System.nanoTime()
 
-    while (isActive) {
+    while (isActive && !isGameOver) {
       withFrameNanos { now ->
-        if (!isPaused) {
+        if (!isPaused && !isGameOver) {
           val dt = ((now - lastTimeNanos) / 1_000_000_000f).coerceIn(0.001f, 0.05f)
           lastTimeNanos = now
 
@@ -153,13 +249,39 @@ fun UnifiedGtaGameEngineScreen(
             }
           }
 
-          // Advance Traffic Vehicles
+          // Advance Traffic Vehicles & Check Collision
           for (car in trafficVehicles) {
             if (car.laneIndex < 0) {
-              car.worldZ -= 7f * dt // oncoming
+              car.worldZ -= 8f * dt // oncoming traffic
+              if (car.worldZ < playerZ - 30f) {
+                car.worldZ = playerZ + 100f + (car.id * 20f)
+              }
             } else {
               car.worldZ += 9f * dt // forward
+              if (car.worldZ < playerZ - 20f) {
+                car.worldZ = playerZ + 120f + (car.id * 20f)
+              }
             }
+
+            // Check collision with player when on foot
+            if (!isInsideVehicle && abs(car.worldZ - playerZ) < 3.0f) {
+              val carX = if (car.laneIndex < 0) -0.5f else 0.5f
+              if (abs(carX - playerX) < 0.35f) {
+                if (playerArmor > 0f) {
+                  playerArmor = (playerArmor - 0.6f * dt).coerceAtLeast(0f)
+                } else {
+                  playerHealth = (playerHealth - 0.5f * dt).coerceAtLeast(0f)
+                }
+                HapticManager.vibrateClick()
+              }
+            }
+          }
+
+          // Check Game Over conditions
+          if (playerHealth <= 0f) {
+            triggerGameOver("WASTED - سقط البطل في أزقة صنعاء! 💀")
+          } else if (chaseRemainingSeconds <= 0) {
+            triggerGameOver("BUSTED - انتهى الوقت وحاصرتك دوريات الشرطة! 🚓")
           }
         } else {
           lastTimeNanos = now
@@ -173,7 +295,7 @@ fun UnifiedGtaGameEngineScreen(
       .fillMaxSize()
       .background(Color.Black)
   ) {
-    // 1. 3D Third-Person Perspective Canvas (Matching Screenshots 1, 2, 3)
+    // 1. 3D Third-Person Perspective Canvas
     UnifiedGtaGameCanvas(
       hero = currentHero,
       weapon = currentWeapon,
@@ -207,7 +329,7 @@ fun UnifiedGtaGameEngineScreen(
       modifier = Modifier.fillMaxSize()
     )
 
-    // 3. Top-Center Mini Bar (Pause & Back button without any intrusive dialogs!)
+    // 3. Top-Center Mini Bar (Pause & Back button)
     Row(
       modifier = Modifier
         .align(Alignment.TopCenter)
@@ -250,7 +372,7 @@ fun UnifiedGtaGameEngineScreen(
       }
     }
 
-    // 4. Virtual Analog Joystick on Bottom-Left (Matching Screenshot 3)
+    // 4. Virtual Analog Joystick on Bottom-Left
     Box(
       modifier = Modifier
         .align(Alignment.BottomStart)
@@ -307,9 +429,9 @@ fun UnifiedGtaGameEngineScreen(
       modifier = Modifier.align(Alignment.BottomEnd)
     )
 
-    // 6. Subtly Fading Hero Switch Announcement (Pure visual, no blocking dialogs!)
+    // 6. Pause Dialog
     AnimatedVisibility(
-      visible = isPaused,
+      visible = isPaused && !isGameOver,
       enter = fadeIn(),
       exit = fadeOut(),
       modifier = Modifier.align(Alignment.Center)
@@ -333,8 +455,254 @@ fun UnifiedGtaGameEngineScreen(
           ) {
             Text("استئناف اللعب ▶", color = Color.Black, fontWeight = FontWeight.Bold)
           }
+          Spacer(modifier = Modifier.height(8.dp))
+          OutlinedButton(
+            onClick = {
+              isPaused = false
+              triggerGameOver("نهاية الجولة بناءً على طلب اللاعب 🛑")
+            },
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5252)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF5252)),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.testTag("btn_end_game_session")
+          ) {
+            Text("إنهاء الجولة وعرض النتيجة 📊", color = Color(0xFFFF5252), fontSize = 12.sp)
+          }
+        }
+      }
+    }
+
+    // 7. Game Over Overlay with Room DB Persistence & Immediate Session Restart
+    AnimatedVisibility(
+      visible = isGameOver,
+      enter = fadeIn() + scaleIn(initialScale = 0.92f),
+      exit = fadeOut() + scaleOut(targetScale = 0.92f),
+      modifier = Modifier.fillMaxSize()
+    ) {
+      GameOverOverlay(
+        reason = gameOverReason,
+        savedRecord = savedScoreRecord,
+        globalBestScore = globalBestScore,
+        isSaving = isSavingToDb,
+        currentHero = currentHero,
+        onRestart = { restartGameSession() },
+        onExitToMenu = onNavigateBack
+      )
+    }
+  }
+}
+
+/**
+ * Game Over Overlay displaying the final score saved from the database
+ * and providing an immediate restart button to resume play without exiting the app.
+ */
+@Composable
+fun GameOverOverlay(
+  reason: String,
+  savedRecord: HighScoreEntity?,
+  globalBestScore: Int,
+  isSaving: Boolean,
+  currentHero: UnifiedHeroId,
+  onRestart: () -> Unit,
+  onExitToMenu: () -> Unit,
+  modifier: Modifier = Modifier
+) {
+  Box(
+    modifier = modifier
+      .fillMaxSize()
+      .background(Color(0xF2090D14))
+      .padding(20.dp),
+    contentAlignment = Alignment.Center
+  ) {
+    val isWasted = reason.contains("WASTED")
+    val borderColor = if (isWasted) Color(0xFFFF1744) else Color(0xFFF5C518)
+
+    Card(
+      colors = CardDefaults.cardColors(containerColor = Color(0xFF161B22)),
+      shape = RoundedCornerShape(24.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .widthIn(max = 500.dp)
+        .border(2.dp, borderColor, RoundedCornerShape(24.dp))
+        .testTag("game_over_overlay_card")
+    ) {
+      Column(
+        modifier = Modifier
+          .padding(22.dp)
+          .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        // 1. Header Banner
+        Text(
+          text = if (isWasted) "WASTED 💀" else "BUSTED 🚨",
+          color = if (isWasted) Color(0xFFFF5252) else Color(0xFFF5C518),
+          fontSize = 28.sp,
+          fontWeight = FontWeight.Black,
+          letterSpacing = 2.sp
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+          text = reason,
+          color = Color.White,
+          fontSize = 14.sp,
+          fontWeight = FontWeight.Bold,
+          textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Hero Info Tag
+        Surface(
+          color = Color(0xFF21262D),
+          shape = RoundedCornerShape(20.dp),
+          border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x66FFFFFF))
+        ) {
+          Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            Text(
+              text = "البطل: ${currentHero.heroNameAr} (${currentHero.heroTitleAr})",
+              color = Color(0xFFF5C518),
+              fontSize = 12.sp,
+              fontWeight = FontWeight.Medium
+            )
+          }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 2. Room Database Saved Score Section
+        Surface(
+          color = Color(0xFF0D1117),
+          shape = RoundedCornerShape(16.dp),
+          border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFF30363D)),
+          modifier = Modifier.fillMaxWidth()
+        ) {
+          Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+          ) {
+            Text(
+              text = "النتيجة النهائية المحفوظة في قاعدة البيانات (Room DB)",
+              color = Color.LightGray,
+              fontSize = 11.5.sp,
+              fontWeight = FontWeight.Medium,
+              textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (isSaving) {
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(vertical = 12.dp)
+              ) {
+                CircularProgressIndicator(
+                  modifier = Modifier.size(22.dp),
+                  color = Color(0xFFF5C518),
+                  strokeWidth = 2.5.dp
+                )
+                Text("جاري الحفظ في Room Database...", color = Color.White, fontSize = 12.sp)
+              }
+            } else if (savedRecord != null) {
+              Text(
+                text = "${savedRecord.score}",
+                modifier = Modifier.testTag("final_saved_score_text"),
+                color = Color(0xFF4CAF50),
+                fontSize = 38.sp,
+                fontWeight = FontWeight.Black
+              )
+
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+              ) {
+                Icon(
+                  imageVector = Icons.Default.CheckCircle,
+                  contentDescription = null,
+                  tint = Color(0xFF4CAF50),
+                  modifier = Modifier.size(14.dp)
+                )
+                Text(
+                  text = "تم التوثيق محلياً في قاعدة البيانات بنجاح",
+                  color = Color(0xFF4CAF50),
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold
+                )
+              }
+
+              Spacer(modifier = Modifier.height(14.dp))
+
+              // Grid of Breakdown Stats
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+              ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  Text("الغنائم المحصلة", color = Color.Gray, fontSize = 11.sp)
+                  Text("+${savedRecord.coinsEarned} 🪙", color = Color(0xFFFFD54F), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  Text("مدة المطاردة", color = Color.Gray, fontSize = 11.sp)
+                  Text(savedRecord.getFormattedChaseTime(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  Text("أعلى رقم قياسي", color = Color.Gray, fontSize = 11.sp)
+                  Text("${maxOf(globalBestScore, savedRecord.score)} 🏆", color = Color(0xFF81D4FA), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+              }
+            } else {
+              Text("0", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            }
+          }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // 3. Action Buttons
+        // Primary: Restart session immediately without closing the app
+        Button(
+          onClick = onRestart,
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5C518)),
+          shape = RoundedCornerShape(12.dp),
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .testTag("btn_restart_game")
+        ) {
+          Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Black)
+          Spacer(modifier = Modifier.width(8.dp))
+          Text(
+            text = "إعادة المحاولة فوراً 🔄 (Restart)",
+            color = Color.Black,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+          )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Secondary: Return to Main Menu
+        OutlinedButton(
+          onClick = onExitToMenu,
+          shape = RoundedCornerShape(12.dp),
+          colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+          border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x66FFFFFF)),
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .testTag("btn_game_over_back_menu")
+        ) {
+          Icon(Icons.Default.Home, contentDescription = null, tint = Color.White)
+          Spacer(modifier = Modifier.width(8.dp))
+          Text("العودة للقائمة الرئيسية 🏠", color = Color.White, fontSize = 13.sp)
         }
       }
     }
   }
 }
+
