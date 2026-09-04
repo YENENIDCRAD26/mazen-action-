@@ -138,3 +138,8 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+// Ensure generateDebugKeystore runs before preBuild and signing validation
+tasks.matching { it.name == "preBuild" || it.name.startsWith("validateSigning") }.configureEach {
+  dependsOn(":generateDebugKeystore")
+}
