@@ -30,9 +30,14 @@ import androidx.compose.ui.window.Dialog
 import com.example.data.local.AppDatabase
 import com.example.data.local.HighScoreEntity
 import com.example.model.*
+import com.example.sound.AdaptiveZawamilEngine
+import com.example.sound.GameplayEnvironment
 import com.example.sound.GameSoundEffects
 import com.example.sound.HapticManager
 import com.example.sound.YemeniZawamilEngine
+import com.example.sound.ZawamilStinger
+import com.example.ui.components.OldSanaaCityMiniMap
+import com.example.ui.components.SanaaMapPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -323,6 +328,19 @@ fun UnifiedGtaGameEngineScreen(
             gameTimeMinutes += 1
             if (chaseRemainingSeconds > 0) {
               chaseRemainingSeconds -= 1
+            }
+
+            // التكيف الصوتي التلقائي بناءً على بيئة اللعبة ومجرياتها
+            val isPlayerChased = (chaseRemainingSeconds > 0)
+            val targetAudioEnv = when {
+              isPlayerChased -> GameplayEnvironment.HIGH_SPEED_CHASE
+              currentDistrict == SanaaDistrict.DEFENCE_MINISTRY_ORDI -> GameplayEnvironment.GOVERNMENT_HQ_ALERT
+              currentDistrict == SanaaDistrict.SANAA_SAILAH -> GameplayEnvironment.HIGH_SPEED_CHASE
+              currentDistrict == SanaaDistrict.SANAA_SCHOOLS -> GameplayEnvironment.STEALTH_INFILTRATION
+              else -> GameplayEnvironment.CALM_ROAMING
+            }
+            if (AdaptiveZawamilEngine.currentEnvironment != targetAudioEnv) {
+              AdaptiveZawamilEngine.setEnvironment(targetAudioEnv)
             }
           }
 
@@ -692,6 +710,23 @@ fun UnifiedGtaGameEngineScreen(
       }
     }
 
+    // 4.6. Old Sana'a Tactical Mini-Map Component (مكون الخارطة المصغرة لصنعاء القديمة والمراكز والمهام)
+    OldSanaaCityMiniMap(
+      playerNormX = (playerX / 1.5f).coerceIn(-1f, 1f),
+      playerNormY = (((playerZ % 600f) / 300f) - 1f).coerceIn(-1f, 1f),
+      playerHeadingDeg = playerAngleDeg,
+      isChased = chaseRemainingSeconds > 0,
+      onPointSelected = { selectedPoint ->
+        turnAlertMessage = "🧭 تم تحديد المسار نحو: ${selectedPoint.titleAr}"
+        turnAlertTimer = 4.0f
+        GameSoundEffects.playCoin()
+        HapticManager.vibrateClick()
+      },
+      modifier = Modifier
+        .align(Alignment.TopEnd)
+        .padding(top = 96.dp, end = 12.dp)
+    )
+
     // 5. Controller Cluster on Bottom-Left: Joypad or Analog Joystick
     Column(
       modifier = Modifier
@@ -889,6 +924,79 @@ fun UnifiedGtaGameEngineScreen(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
+
+            // Adaptive Gameplay Audio Atmosphere Controls (البيئة الصوتية المتكيفة)
+            Text(
+              text = "🎛️ البيئة الصوتية المتكيفة ديناميكياً:",
+              color = Color(0xFFFFD54F),
+              fontSize = 12.sp,
+              fontWeight = FontWeight.Bold,
+              modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            androidx.compose.foundation.lazy.LazyRow(
+              horizontalArrangement = Arrangement.spacedBy(6.dp),
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              items(GameplayEnvironment.values().toList()) { env ->
+                val isCurrentEnv = AdaptiveZawamilEngine.currentEnvironment == env
+                FilterChip(
+                  selected = isCurrentEnv,
+                  onClick = {
+                    AdaptiveZawamilEngine.setEnvironment(env)
+                    HapticManager.vibrateClick()
+                  },
+                  label = { Text("${env.iconEmoji} ${env.titleAr}", fontSize = 10.5.sp) }
+                )
+              }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Atmospheric Sound Stingers (مؤثرات وزغاريد حماسية فورية)
+            Row(
+              horizontalArrangement = Arrangement.spacedBy(6.dp),
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Button(
+                onClick = {
+                  AdaptiveZawamilEngine.triggerStinger(ZawamilStinger.WAR_DRUM_SLAM)
+                  HapticManager.vibrateClick()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                modifier = Modifier.weight(1f).height(30.dp)
+              ) {
+                Text("🥁 طبل حربي", color = Color.White, fontSize = 10.sp)
+              }
+              Button(
+                onClick = {
+                  AdaptiveZawamilEngine.triggerStinger(ZawamilStinger.METALLIC_TASA)
+                  HapticManager.vibrateClick()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                modifier = Modifier.weight(1f).height(30.dp)
+              ) {
+                Text("🔔 طاسة نحاسية", color = Color.White, fontSize = 10.sp)
+              }
+              Button(
+                onClick = {
+                  AdaptiveZawamilEngine.triggerStinger(ZawamilStinger.CELEBRATION_SHOT)
+                  HapticManager.vibrateClick()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF374151)),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                modifier = Modifier.weight(1f).height(30.dp)
+              ) {
+                Text("🎆 عيار فخر", color = Color.White, fontSize = 10.sp)
+              }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Current Lyrics Card
             Surface(
