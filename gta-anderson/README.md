@@ -1,6 +1,3 @@
-```markdown
-name=gta-anderson/README.md
-
 # مَجلد: GTA Anderson
 
 هذا المجلد يجمع موادًا لعرض وتشغيل شخصية ماركوس "أندرسون" في جلسات لعب الأدوار أو كمحتوى مهام داخل لعبة. الملفات الموجودة:
@@ -20,5 +17,4 @@ name=gta-anderson/README.md
 - إذا رغبت بترجمات إنجليزية أو ملفات منفصلة، أخبرني وسأنشئها.
 
 ---
-ملف مُنتَج آليًا بواسطة Copilot bot — GTA Anderson content collection.
-```
+GTA Anderson content collection.
