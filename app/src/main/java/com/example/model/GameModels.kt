@@ -18,7 +18,10 @@ enum class GameScreen {
   CHARACTER_DOSSIER,
   STORY_GALLERY,
   HQ_UPGRADES,
-  LEADERBOARD
+  LEADERBOARD,
+  PRANKSTER_GRID_GAME,
+  ANDERSON_CITY,
+  MISSION_SYSTEM
 }
 
 enum class TacticalItemCategory(val titleAr: String, val iconEmoji: String) {

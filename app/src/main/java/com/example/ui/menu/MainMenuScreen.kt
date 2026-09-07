@@ -732,6 +732,22 @@ fun MainMenuScreen(
       )
     }
 
+    // Tactical Missions System (Room Database + Firebase AI Guide)
+    item {
+      GameModeCard(
+        title = "📜 نظام المهام التكتيكية ومرشد الهروب (Firebase AI)",
+        subtitle = "مهام تكتيكية متزامنة مع Room Database + مرشد ذكي يقدم استراتيجيات للهروب من الشرطة في أزقة صنعاء",
+        badge = "🤖 ذكاء اصطناعي + Room",
+        badgeColor = Color(0xFF10B981),
+        accentColor = Color(0xFF10B981),
+        onClick = {
+          GameSoundEffects.playCoin()
+          onNavigateTo(GameScreen.MISSION_SYSTEM)
+        },
+        testTag = "mode_mission_system"
+      )
+    }
+
     // Mode 4 & 5: Lore Dossier & HQ Shop
     item {
       Row(

@@ -23,7 +23,8 @@ enum class UnifiedHeroId(
   val defaultAmmo: String,
   val baseSpeed: Float,
   val jumpPower: Float,
-  val perkDescriptionAr: String
+  val perkDescriptionAr: String,
+  val hasJambiya: Boolean = false
 ) {
   MAZEN(
     id = "mazen_leader",
@@ -39,7 +40,8 @@ enum class UnifiedHeroId(
     defaultAmmo = "437-50",
     baseSpeed = 1.0f,
     jumpPower = 1.0f,
-    perkDescriptionAr = "كاريزما القيادة وسرعة الركض والمراوغة"
+    perkDescriptionAr = "كاريزما القيادة والجنبية الصنعانية وسرعة الركض والمراوغة",
+    hasJambiya = true
   ),
   FARIS(
     id = "faris_parkour",
@@ -55,7 +57,8 @@ enum class UnifiedHeroId(
     defaultAmmo = "99-10",
     baseSpeed = 1.15f,
     jumpPower = 1.35f,
-    perkDescriptionAr = "قفزات بهلوانية فائقة واعتلاء الأسطح"
+    perkDescriptionAr = "قفزات بهلوانية فائقة واعتلاء الأسطح",
+    hasJambiya = false
   ),
   AMMAR(
     id = "ammar_driver",
@@ -71,7 +74,8 @@ enum class UnifiedHeroId(
     defaultAmmo = "∞",
     baseSpeed = 0.95f,
     jumpPower = 0.9f,
-    perkDescriptionAr = "قيادة فورية للسيارات وسرعة نيترو مضاعفة"
+    perkDescriptionAr = "قيادة فورية للسيارات وسرعة نيترو مضاعفة",
+    hasJambiya = true
   ),
   SALEM(
     id = "salem_sniper",
@@ -87,7 +91,8 @@ enum class UnifiedHeroId(
     defaultAmmo = "60-15",
     baseSpeed = 1.05f,
     jumpPower = 1.1f,
-    perkDescriptionAr = "ستار دخاني وتشتيت دوريات الشرطة"
+    perkDescriptionAr = "ستار دخاني وتشتيت دوريات الشرطة",
+    hasJambiya = false
   )
 }
 

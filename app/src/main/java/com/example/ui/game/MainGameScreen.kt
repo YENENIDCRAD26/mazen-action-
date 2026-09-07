@@ -474,6 +474,87 @@ fun MainGameScreen(
           }
         }
       }
+
+      // 4. Coroutine Game Loop Grid Shortcut
+      item {
+        Button(
+          onClick = { onNavigateTo(GameScreen.PRANKSTER_GRID_GAME) },
+          shape = RoundedCornerShape(14.dp),
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .testTag("btn_launch_prankster_grid_game")
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+          ) {
+            Text("🕹️", fontSize = 18.sp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+              "مطاردة المشاغب والشرطة (حلقة شبكية تفاعلية)",
+              color = Color.White,
+              fontWeight = FontWeight.Bold,
+              fontSize = 13.sp
+            )
+          }
+        }
+      }
+
+      // 5. Anderson City: 80s/90s Open-World Syndicate
+      item {
+        Button(
+          onClick = { onNavigateTo(GameScreen.ANDERSON_CITY) },
+          shape = RoundedCornerShape(14.dp),
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)),
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .testTag("btn_launch_anderson_city")
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+          ) {
+            Text("🏙️", fontSize = 18.sp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+              "مدينة أندرسون: صعود الإمبراطورية (Anderson City 80s/90s)",
+              color = Color.White,
+              fontWeight = FontWeight.Bold,
+              fontSize = 13.sp
+            )
+          }
+        }
+      }
+
+      // 6. Tactical Missions & Firebase AI Guide (Room DB + Firebase AI)
+      item {
+        Button(
+          onClick = { onNavigateTo(GameScreen.MISSION_SYSTEM) },
+          shape = RoundedCornerShape(14.dp),
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .testTag("btn_launch_mission_system")
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+          ) {
+            Text("📜", fontSize = 20.sp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+              "قائمة المهام التكتيكية (Room) ومرشد الهروب (Firebase AI)",
+              color = Color.White,
+              fontWeight = FontWeight.Bold,
+              fontSize = 13.sp
+            )
+          }
+        }
+      }
     }
   }
 

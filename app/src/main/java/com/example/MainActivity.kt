@@ -19,9 +19,12 @@ import com.example.ui.beirut.GtaBeirut3DScreen
 import com.example.ui.dossier.CharacterDossierScreen
 import com.example.ui.game.ChaseGameScreen
 import com.example.ui.game.MainGameScreen
+import com.example.ui.game.PranksterGridGameScreen
+import com.example.ui.game.AndersonCityScreen
 import com.example.ui.hideout.HideoutTacticsScreen
 import com.example.ui.hq.HqUpgradesScreen
 import com.example.ui.leaderboard.Top10LeaderboardScreen
+import com.example.ui.missions.MissionListScreen
 import com.example.ui.components.MilestoneToastHudOverlay
 import com.example.ui.menu.MainMenuScreen
 import com.example.ui.sanaa7d.GtaSanaa7DChaseScreen
@@ -139,6 +142,21 @@ class MainActivity : ComponentActivity() {
                   repository = repository,
                   onNavigateBack = { currentScreen = GameScreen.MAIN_GAME },
                   onStartChallenge = { currentScreen = GameScreen.GTA_SANAA_7D }
+                )
+              }
+              GameScreen.PRANKSTER_GRID_GAME -> {
+                PranksterGridGameScreen(
+                  onNavigateBack = { currentScreen = GameScreen.MAIN_GAME }
+                )
+              }
+              GameScreen.ANDERSON_CITY -> {
+                AndersonCityScreen(
+                  onNavigateBack = { currentScreen = GameScreen.MAIN_GAME }
+                )
+              }
+              GameScreen.MISSION_SYSTEM -> {
+                MissionListScreen(
+                  onNavigateBack = { currentScreen = GameScreen.MAIN_GAME }
                 )
               }
             }

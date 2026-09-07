@@ -33,6 +33,237 @@ import androidx.compose.ui.unit.sp
 import com.example.sound.HapticManager
 import kotlin.math.*
 
+enum class ControllerInputMode {
+  JOYPAD,  // وحده تحكم جوبياد (Console D-Pad)
+  JOYSTICK // عصا الأنالوج الافتراضية
+}
+
+/**
+ * Authentic Virtual D-Pad Joypad (وحدة تحكم جوبياد كلاسيكية احترافية).
+ * Offers tactile 8-way directional controls with illuminated feedback,
+ * embossed bevels, and responsive haptics.
+ */
+@Composable
+fun GtaJoypadController(
+  modifier: Modifier = Modifier,
+  sizeDp: Float = 146f,
+  onMove: (deltaX: Float, deltaY: Float) -> Unit,
+  onRelease: () -> Unit
+) {
+  var activeDirection by remember { mutableStateOf<String?>(null) }
+  var touchOffset by remember { mutableStateOf(Offset.Zero) }
+
+  Box(
+    modifier = modifier
+      .size(sizeDp.dp)
+      .pointerInput(Unit) {
+        detectDragGestures(
+          onDragStart = { offset ->
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val diff = offset - center
+            touchOffset = diff
+            val dist = diff.getDistance()
+            if (dist > 10f) {
+              val angle = (atan2(diff.y, diff.x) * (180f / PI.toFloat()) + 360f) % 360f
+              val (nx, ny, dir) = calculateDirection(angle)
+              activeDirection = dir
+              onMove(nx, ny)
+              HapticManager.vibrateMovement()
+            }
+          },
+          onDrag = { change, dragAmount ->
+            change.consume()
+            val center = Offset(size.width / 2f, size.height / 2f)
+            touchOffset += dragAmount
+            val dist = touchOffset.getDistance()
+            if (dist > 10f) {
+              val angle = (atan2(touchOffset.y, touchOffset.x) * (180f / PI.toFloat()) + 360f) % 360f
+              val (nx, ny, dir) = calculateDirection(angle)
+              if (activeDirection != dir) {
+                activeDirection = dir
+                HapticManager.vibrateLightTap()
+              }
+              onMove(nx, ny)
+            } else {
+              activeDirection = null
+              onRelease()
+            }
+          },
+          onDragEnd = {
+            activeDirection = null
+            touchOffset = Offset.Zero
+            onRelease()
+          },
+          onDragCancel = {
+            activeDirection = null
+            touchOffset = Offset.Zero
+            onRelease()
+          }
+        )
+      }
+      .testTag("gta_joypad_controller"),
+    contentAlignment = Alignment.Center
+  ) {
+    // 3D Canvas Rendering of the Console Joypad
+    Canvas(modifier = Modifier.fillMaxSize()) {
+      val w = size.width
+      val h = size.height
+      val cx = w / 2f
+      val cy = h / 2f
+
+      // Outer Joypad casing / bezel
+      drawCircle(
+        brush = Brush.radialGradient(
+          colors = listOf(Color(0xFF263238), Color(0xFF0F172A)),
+          center = Offset(cx, cy),
+          radius = w * 0.48f
+        ),
+        radius = w * 0.48f,
+        center = Offset(cx, cy)
+      )
+      drawCircle(
+        color = Color(0x66FFFFFF),
+        radius = w * 0.48f,
+        center = Offset(cx, cy),
+        style = Stroke(width = 2.5f)
+      )
+
+      // D-Pad Cross Wings
+      val armWidth = w * 0.30f
+      val armLength = w * 0.42f
+
+      // Horizontal arm
+      drawRoundRect(
+        color = Color(0xFF1E293B),
+        topLeft = Offset(cx - armLength, cy - armWidth / 2f),
+        size = androidx.compose.ui.geometry.Size(armLength * 2f, armWidth),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f, 8f)
+      )
+      // Vertical arm
+      drawRoundRect(
+        color = Color(0xFF1E293B),
+        topLeft = Offset(cx - armWidth / 2f, cy - armLength),
+        size = androidx.compose.ui.geometry.Size(armWidth, armLength * 2f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f, 8f)
+      )
+
+      // Active Direction Highlights
+      val highlightColor = Color(0xFFF5C518)
+      when (activeDirection) {
+        "UP" -> {
+          drawRoundRect(
+            color = highlightColor.copy(alpha = 0.85f),
+            topLeft = Offset(cx - armWidth / 2f + 2f, cy - armLength + 2f),
+            size = androidx.compose.ui.geometry.Size(armWidth - 4f, armLength - cy + armWidth / 2f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f)
+          )
+        }
+        "DOWN" -> {
+          drawRoundRect(
+            color = highlightColor.copy(alpha = 0.85f),
+            topLeft = Offset(cx - armWidth / 2f + 2f, cy + armWidth / 2f),
+            size = androidx.compose.ui.geometry.Size(armWidth - 4f, armLength - armWidth / 2f - 2f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f)
+          )
+        }
+        "LEFT" -> {
+          drawRoundRect(
+            color = highlightColor.copy(alpha = 0.85f),
+            topLeft = Offset(cx - armLength + 2f, cy - armWidth / 2f + 2f),
+            size = androidx.compose.ui.geometry.Size(armLength - cx + armWidth / 2f, armWidth - 4f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f)
+          )
+        }
+        "RIGHT" -> {
+          drawRoundRect(
+            color = highlightColor.copy(alpha = 0.85f),
+            topLeft = Offset(cx + armWidth / 2f, cy - armWidth / 2f + 2f),
+            size = androidx.compose.ui.geometry.Size(armLength - armWidth / 2f - 2f, armWidth - 4f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f)
+          )
+        }
+      }
+
+      // Engraved Triangles / Arrows on D-Pad Wings
+      val arrowSize = 10f
+      // UP Arrow
+      val upArrow = Path().apply {
+        moveTo(cx, cy - armLength + 8f)
+        lineTo(cx - arrowSize, cy - armLength + 8f + arrowSize * 1.5f)
+        lineTo(cx + arrowSize, cy - armLength + 8f + arrowSize * 1.5f)
+        close()
+      }
+      drawPath(upArrow, if (activeDirection == "UP") Color.Black else Color(0xCCFFFFFF))
+
+      // DOWN Arrow
+      val downArrow = Path().apply {
+        moveTo(cx, cy + armLength - 8f)
+        lineTo(cx - arrowSize, cy + armLength - 8f - arrowSize * 1.5f)
+        lineTo(cx + arrowSize, cy + armLength - 8f - arrowSize * 1.5f)
+        close()
+      }
+      drawPath(downArrow, if (activeDirection == "DOWN") Color.Black else Color(0xCCFFFFFF))
+
+      // LEFT Arrow
+      val leftArrow = Path().apply {
+        moveTo(cx - armLength + 8f, cy)
+        lineTo(cx - armLength + 8f + arrowSize * 1.5f, cy - arrowSize)
+        lineTo(cx - armLength + 8f + arrowSize * 1.5f, cy + arrowSize)
+        close()
+      }
+      drawPath(leftArrow, if (activeDirection == "LEFT") Color.Black else Color(0xCCFFFFFF))
+
+      // RIGHT Arrow
+      val rightArrow = Path().apply {
+        moveTo(cx + armLength - 8f, cy)
+        lineTo(cx + armLength - 8f - arrowSize * 1.5f, cy - arrowSize)
+        lineTo(cx + armLength - 8f - arrowSize * 1.5f, cy + arrowSize)
+        close()
+      }
+      drawPath(rightArrow, if (activeDirection == "RIGHT") Color.Black else Color(0xCCFFFFFF))
+
+      // Center Disc Pivot (Brushed metallic indented circle)
+      drawCircle(
+        brush = Brush.radialGradient(
+          colors = listOf(Color(0xFF37474F), Color(0xFF1E293B)),
+          center = Offset(cx, cy),
+          radius = armWidth * 0.55f
+        ),
+        radius = armWidth * 0.55f,
+        center = Offset(cx, cy)
+      )
+      drawCircle(
+        color = Color(0x44FFFFFF),
+        radius = armWidth * 0.55f,
+        center = Offset(cx, cy),
+        style = Stroke(width = 1.8f)
+      )
+
+      // Center emblem / dot
+      drawCircle(
+        color = if (activeDirection != null) Color(0xFFF5C518) else Color(0x8890A4AE),
+        radius = 5f,
+        center = Offset(cx, cy)
+      )
+    }
+  }
+}
+
+private fun calculateDirection(angle: Float): Triple<Float, Float, String> {
+  // Normalize angle: 0 is Right, 90 is Down, 180 is Left, 270 is Up
+  return when (angle) {
+    in 337.5f..360f, in 0f..22.5f -> Triple(1f, 0f, "RIGHT")
+    in 22.5f..67.5f -> Triple(0.75f, 0.75f, "RIGHT")
+    in 67.5f..112.5f -> Triple(0f, 1f, "DOWN")
+    in 112.5f..157.5f -> Triple(-0.75f, 0.75f, "DOWN")
+    in 157.5f..202.5f -> Triple(-1f, 0f, "LEFT")
+    in 202.5f..247.5f -> Triple(-0.75f, -0.75f, "UP")
+    in 247.5f..292.5f -> Triple(0f, -1f, "UP")
+    in 292.5f..337.5f -> Triple(0.75f, -0.75f, "UP")
+    else -> Triple(0f, 0f, "CENTER")
+  }
+}
+
 /**
  * Virtual Analog Joystick (Matching GTA San Andreas Mobile Screenshot 3).
  * Clean dark circular ring outline with solid white thumb knob that smoothly follows touch/drag.
@@ -148,12 +379,85 @@ fun GtaAnalogJoystick(
 }
 
 /**
- * GTA Action Buttons Cluster on Right Screen (Matching GTA San Andreas Mobile).
+ * Controller Mode Selector (Joypad vs. Joystick)
+ */
+@Composable
+fun JoypadModeToggle(
+  currentMode: ControllerInputMode,
+  onModeChanged: (ControllerInputMode) -> Unit,
+  modifier: Modifier = Modifier
+) {
+  Surface(
+    color = Color(0xDD0F172A),
+    shape = RoundedCornerShape(20.dp),
+    border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFF5C518)),
+    shadowElevation = 6.dp,
+    modifier = modifier.height(34.dp)
+  ) {
+    Row(
+      modifier = Modifier.padding(2.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      // Joypad Button
+      Surface(
+        onClick = {
+          HapticManager.vibrateLightTap()
+          onModeChanged(ControllerInputMode.JOYPAD)
+        },
+        shape = RoundedCornerShape(18.dp),
+        color = if (currentMode == ControllerInputMode.JOYPAD) Color(0xFFF5C518) else Color.Transparent,
+        modifier = Modifier.testTag("btn_mode_joypad")
+      ) {
+        Row(
+          modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Text("🎮", fontSize = 12.sp)
+          Spacer(modifier = Modifier.width(3.dp))
+          Text(
+            "جوبياد",
+            color = if (currentMode == ControllerInputMode.JOYPAD) Color.Black else Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp
+          )
+        }
+      }
+
+      // Joystick Button
+      Surface(
+        onClick = {
+          HapticManager.vibrateLightTap()
+          onModeChanged(ControllerInputMode.JOYSTICK)
+        },
+        shape = RoundedCornerShape(18.dp),
+        color = if (currentMode == ControllerInputMode.JOYSTICK) Color(0xFFF5C518) else Color.Transparent,
+        modifier = Modifier.testTag("btn_mode_joystick")
+      ) {
+        Row(
+          modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Text("🕹️", fontSize = 12.sp)
+          Spacer(modifier = Modifier.width(3.dp))
+          Text(
+            "أنالوج",
+            color = if (currentMode == ControllerInputMode.JOYSTICK) Color.Black else Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp
+          )
+        }
+      }
+    }
+  }
+}
+
+/**
+ * GTA Action Buttons Cluster on Right Screen (Matching GTA San Andreas Mobile + Joypad A/B/X/Y).
  * Includes:
- * - 🎯 Action / Shoot / Attack Button (large round button with bullet icon)
- * - 🚗 Vehicle Enter / Exit Button (round button with car icon)
- * - 🏃 Sprint / Parkour Jump Button
- * - 🔄 Quick 4-Hero Switcher Button
+ * - 🎯 Action / Shoot / Attack Button (B)
+ * - 🚗 Vehicle Enter / Exit Button (X)
+ * - 🏃 Sprint / Parkour Jump Button (A)
+ * - 🔄 Quick 4-Hero Switcher Button (Y)
  * - 🔫 Weapon Switcher Button
  */
 @Composable
@@ -178,7 +482,7 @@ fun GtaActionButtonsCluster(
       horizontalAlignment = Alignment.End,
       verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-      // Top row of action cluster: [Weapon Switch] + [Hero Switcher]
+      // Top row of action cluster: [Weapon Switch] + [Hero Switcher (Y)]
       Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -202,7 +506,7 @@ fun GtaActionButtonsCluster(
           }
         }
 
-        // 4-Hero Quick Switcher Button with active hero avatar & counter badge
+        // 4-Hero Quick Switcher Button with Joypad (Y) Badge
         Surface(
           onClick = {
             HapticManager.vibrateSuccess()
@@ -220,7 +524,20 @@ fun GtaActionButtonsCluster(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
               Text(currentHero.avatarEmoji, fontSize = 22.sp)
             }
-            // Small badge showing "4 أبطال"
+            // Joypad (Y) badge
+            Surface(
+              color = Color(0xFFFDD835),
+              shape = CircleShape,
+              modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 2.dp, y = 2.dp)
+                .size(16.dp)
+            ) {
+              Box(contentAlignment = Alignment.Center) {
+                Text("Y", color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Black)
+              }
+            }
+            // Small badge showing "تبديل"
             Surface(
               color = Color.Black.copy(alpha = 0.85f),
               shape = RoundedCornerShape(4.dp),
@@ -240,12 +557,12 @@ fun GtaActionButtonsCluster(
         }
       }
 
-      // Middle / Lower Action Cluster: Jump & Vehicle
+      // Middle / Lower Action Cluster: Jump (A) & Vehicle (X)
       Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
       ) {
-        // Vehicle Enter / Exit Button
+        // Vehicle Enter / Exit Button (X)
         Surface(
           onClick = {
             HapticManager.vibrateHeavyImpact()
@@ -261,10 +578,23 @@ fun GtaActionButtonsCluster(
         ) {
           Box(contentAlignment = Alignment.Center) {
             Text(if (isInsideVehicle) "🚪" else "🚗", fontSize = 24.sp)
+            // Joypad (X) badge
+            Surface(
+              color = Color(0xFF1E88E5),
+              shape = CircleShape,
+              modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 2.dp, y = 2.dp)
+                .size(16.dp)
+            ) {
+              Box(contentAlignment = Alignment.Center) {
+                Text("X", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Black)
+              }
+            }
           }
         }
 
-        // Sprint / Parkour Jump Button
+        // Sprint / Parkour Jump Button (A)
         Surface(
           onClick = {
             HapticManager.vibrateMovement()
@@ -282,11 +612,24 @@ fun GtaActionButtonsCluster(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
               Text("🏃‍♂️", fontSize = 22.sp)
             }
+            // Joypad (A) badge
+            Surface(
+              color = Color(0xFF43A047),
+              shape = CircleShape,
+              modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 2.dp, y = 2.dp)
+                .size(16.dp)
+            ) {
+              Box(contentAlignment = Alignment.Center) {
+                Text("A", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Black)
+              }
+            }
           }
         }
       }
 
-      // Primary Shoot / Attack Button (Large circular button matching Screenshot 3!)
+      // Primary Shoot / Attack Button (B) (Matching GTA Mobile + Joypad B)
       Surface(
         onClick = {
           HapticManager.vibrateExplosion()
@@ -301,26 +644,36 @@ fun GtaActionButtonsCluster(
           .testTag("btn_gta_shoot")
       ) {
         Box(contentAlignment = Alignment.Center) {
-          // Circular target / bullet icon matching Screenshot 3
+          // Circular target / bullet icon
           Canvas(modifier = Modifier.size(34.dp)) {
             val center = Offset(size.width / 2f, size.height / 2f)
-            // Outer crosshair circle
             drawCircle(
               color = Color.White,
               radius = size.width / 2f - 2f,
               style = Stroke(width = 3.5f)
             )
-            // Inner bullet/dot
             drawCircle(
               color = Color.White,
               radius = 5.5f,
               center = center
             )
-            // Crosshair lines
             drawLine(Color.White, Offset(center.x, 0f), Offset(center.x, size.height * 0.28f), strokeWidth = 3f)
             drawLine(Color.White, Offset(center.x, size.height * 0.72f), Offset(center.x, size.height), strokeWidth = 3f)
             drawLine(Color.White, Offset(0f, center.y), Offset(size.width * 0.28f, center.y), strokeWidth = 3f)
             drawLine(Color.White, Offset(size.width * 0.72f, center.y), Offset(size.width, center.y), strokeWidth = 3f)
+          }
+          // Joypad (B) badge
+          Surface(
+            color = Color(0xFFE53935),
+            shape = CircleShape,
+            modifier = Modifier
+              .align(Alignment.TopStart)
+              .offset(x = 4.dp, y = 4.dp)
+              .size(18.dp)
+          ) {
+            Box(contentAlignment = Alignment.Center) {
+              Text("B", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Black)
+            }
           }
         }
       }

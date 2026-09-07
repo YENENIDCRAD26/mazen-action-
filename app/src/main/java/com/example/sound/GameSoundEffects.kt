@@ -156,7 +156,7 @@ object GameSoundEffects {
     } catch (_: Exception) {}
   }
 
-  private fun playTone(freq: Double, durationMs: Int) {
+  fun playTone(freq: Double, durationMs: Int) {
     try {
       val sampleRate = 22050
       val numSamples = (durationMs * sampleRate) / 1000
@@ -168,6 +168,16 @@ object GameSoundEffects {
       }
       playRawBuffer(buffer, sampleRate)
     } catch (_: Exception) {}
+  }
+
+  fun playReload() {
+    if (isMuted) return
+    scope.launch {
+      playTone(600.0, 50)
+      kotlinx.coroutines.delay(60)
+      playTone(900.0, 80)
+      playNoise(70)
+    }
   }
 
   private fun playSweep(startFreq: Double, endFreq: Double, durationMs: Int) {
